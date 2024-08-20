@@ -2071,7 +2071,7 @@ IEC104Server::connectionEventHandler(void* parameter,
                                           IMasterConnection con,
                                           CS104_PeerConnectionEvent event)
 {
-    std::string beforeLog = Iec104Utility::PluginName + " - IEC104Server::connectionRequestHandler -";
+    std::string beforeLog = Iec104Utility::PluginName + " - IEC104Server::connectionEventHandler -";
     IEC104Server* self = (IEC104Server*)parameter;
 
     char ipAddrBuf[100];
