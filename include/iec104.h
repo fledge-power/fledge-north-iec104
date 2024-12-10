@@ -18,6 +18,7 @@
 #include <map>
 #include <mutex>
 #include <thread>
+#include <memory>
 
 #include "lib60870/cs104_slave.h"
 #include "lib60870/cs101_information_objects.h"
@@ -31,6 +32,8 @@ class ConfigCategory;
 class IEC104DataPoint;
 class Datapoint;
 class DatapointValue;
+class IEC104ServerRedGroup;
+class RedGroupCon;
 
 class IEC104OutstandingCommand
 {
@@ -96,6 +99,11 @@ public:
 
     int operation(char *operation, int paramCount, char *names[], char *parameters[]);
 
+    inline const std::string& getServiceName() const { return m_service_name; }
+    inline void setServiceName(const std::string& serviceName) { m_service_name = serviceName; }
+
+    IEC104Config* Config(){ return m_config; };
+
 private:
 
     std::vector<IEC104OutstandingCommand*> m_outstandingCommands;
@@ -138,6 +146,9 @@ private:
     static void connectionEventHandler(void* parameter, IMasterConnection con,
                                        CS104_PeerConnectionEvent event);
 
+    void sendConnectionStatusAudit(const std::string& auditType, const std::string& redGroupIndex, const std::string& way);
+    bool prepareConnections();
+
     CS104_Slave m_slave{};
     TLSConfiguration m_tlsConfig = nullptr;
     CS101_AppLayerParameters alParams = nullptr;
@@ -153,6 +164,8 @@ private:
     void _monitoringThread();
 
     bool createTLSConfiguration();
+    std::string m_service_name;    // Service name used to generate audits
+    std::string m_last_audit;      // Last audit sent. Prevent from sending the same audit multiple times
 };
 
 #endif
