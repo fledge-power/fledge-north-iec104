@@ -471,7 +471,7 @@ TEST_F(InterrogationHandlerTest, InterrogationHandlerSingleCA)
     receivedASDUs = LinkedList_create();
 
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     Thread_sleep(500); /* wait for the server to start */
 
@@ -546,7 +546,7 @@ TEST_F(InterrogationHandlerTest, InterrogationHandlerBroadcastCA)
     receivedASDUs = LinkedList_create();
 
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     Thread_sleep(500); /* wait for the server to start */
 
@@ -680,7 +680,7 @@ TEST_F(InterrogationHandlerTest, InterrogationForUnknownCA)
     receivedASDUs = LinkedList_create();
 
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     Thread_sleep(500); /* wait for the server to start */
 
@@ -720,7 +720,7 @@ TEST_F(InterrogationHandlerTest, InterrogationHandlerSingleCAGIGroups)
     receivedASDUs = LinkedList_create();
 
     iec104Server->setJsonConfig(protocol_stack, exchanged_data_2, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     Thread_sleep(500); /* wait for the server to start */
 

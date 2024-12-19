@@ -307,10 +307,17 @@ IEC104Server::setJsonConfig(const std::string& stackConfig,
     }
 }
 
-void
+bool
 IEC104Server::startSlave(){
+    std::string beforeLog = Iec104Utility::PluginName + " - IEC104Server::startSlave -";
+    if (!m_slave) {
+        Iec104Utility::log_error("%s CS104 server instance not available, cannot start monitoring thread", beforeLog.c_str()); //LCOV_EXCL_LINE
+        return false;
+    }
+
     m_started = true;
     m_monitoringThread = new std::thread(&IEC104Server::_monitoringThread, this);
+    return true;
 }
 
 /**
@@ -1311,7 +1318,7 @@ IEC104Server::send(const vector<Reading*>& readings)
             {
                 Iec104Utility::log_info("%s Forward data_object", beforeLog.c_str()); //LCOV_EXCL_LINE
 
-                if (CS104_Slave_isRunning(m_slave) == false) {
+                if ((m_slave == nullptr) || !CS104_Slave_isRunning(m_slave)) {
                     Iec104Utility::log_warn("%s Failed to send data: server not running", beforeLog.c_str());
                     continue;
                 }
