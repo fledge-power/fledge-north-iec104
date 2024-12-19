@@ -32,6 +32,18 @@ class IEC104DataPoint;
 class Datapoint;
 class DatapointValue;
 
+class InformationObject_RAII {
+    public:
+
+    InformationObject_RAII(InformationObject io): m_io(io) {}
+    ~InformationObject_RAII() {
+        if (m_io) {
+            InformationObject_destroy(m_io);
+        }
+    }
+    InformationObject m_io = nullptr;
+};
+
 class IEC104OutstandingCommand
 {
 public:
@@ -119,6 +131,7 @@ private:
     void handleActTerm(int type, int ca, int ioa, bool isNegative);
     bool requestSouthConnectionStatus();
     void updateSouthMonitoringInstance(Datapoint* dp, IEC104Config::SouthPluginMonitor* southPluginMonitor);
+    bool validateCommand(IMasterConnection connection, CS101_ASDU asdu);
 
     static void printCP56Time2a(CP56Time2a time);
     static void rawMessageHandler(void* parameter, IMasterConnection connection,
