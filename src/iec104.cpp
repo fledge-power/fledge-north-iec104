@@ -1300,6 +1300,7 @@ IEC104Server::validateCommand(IMasterConnection connection, CS101_ASDU asdu) {
         Iec104Utility::log_warn("%s command (%s) - Unexpected COT: %d", beforeLog.c_str(),
                                 IEC104DataPoint::getStringFromTypeID(typeId).c_str(), cot);//LCOV_EXCL_LINE
         CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_COT);
+        CS101_ASDU_setNegative(asdu, true);
         return true;
     }
 
@@ -1319,6 +1320,7 @@ IEC104Server::validateCommand(IMasterConnection connection, CS101_ASDU asdu) {
         Iec104Utility::log_warn("%s command (%s) - Unknown CA: %i", beforeLog.c_str(),
                                 IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca); //LCOV_EXCL_LINE
         CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_CA);
+        CS101_ASDU_setNegative(asdu, true);
         return true;
     }
 
@@ -1327,6 +1329,8 @@ IEC104Server::validateCommand(IMasterConnection connection, CS101_ASDU asdu) {
     if (!m_config->IsOriginatorAllowed(oa)) {
         Iec104Utility::log_warn("%s command (%s) for %i - Originator address %i not allowed", beforeLog.c_str(),
                                 IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, oa); //LCOV_EXCL_LINE
+        CS101_ASDU_setCOT(asdu, CS101_COT_ACTIVATION_CON);
+        CS101_ASDU_setNegative(asdu, true);
         return true;
     }
 
