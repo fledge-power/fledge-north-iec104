@@ -6,11 +6,11 @@ RedGroupCon::RedGroupCon(const string& clientIp)
 {
     m_clientIp = clientIp;
     m_port = "";
-    m_way = "";
+    m_pathLetter = "";
 }
 
-RedGroupCon::RedGroupCon(const string& clientIp, const std::string& port, const std::string& way)
-    : m_clientIp(clientIp), m_port(port), m_way(way)  {}
+RedGroupCon::RedGroupCon(const string& clientIp, const std::string& port, const std::string& pathLetter)
+    : m_clientIp(clientIp), m_port(port), m_pathLetter(pathLetter)  {}
 
 IEC104ServerRedGroup::IEC104ServerRedGroup(const std::string& name, int index, CS104_RedundancyGroup cs104RedGroup)
 {
@@ -36,16 +36,4 @@ std::shared_ptr<RedGroupCon> IEC104ServerRedGroup::GetRedGroupCon(const std::str
     }
 
     return currentConnection;
-}
-
-bool IEC104ServerRedGroup::AreConnectionsClosed()
-{
-    int nbClosedConnections = 0;
-    for (const auto& connection : m_connections) {
-        if (connection->Port().empty()) {
-            nbClosedConnections += 1;
-        }
-    }
-
-    return nbClosedConnections == m_maxConnections;
 }

@@ -12,23 +12,24 @@ class RedGroupCon
 {
 public:
     RedGroupCon(const std::string& clientIp);
-    RedGroupCon(const std::string& clientIp, const std::string& port, const std::string &way);
+    RedGroupCon(const std::string& clientIp, const std::string& port, const std::string &pathLetter);
     ~RedGroupCon() = default;
 
     const std::string& ClientIP() const {return m_clientIp;};
     const std::string& Port() const {return m_port;};
-    const std::string& Way() const {return m_way;};
+    const std::string& PathLetter() const {return m_pathLetter;};
+    const bool& isActive() const {return m_isActive;};
 
     void SetPort(const std::string& port) { m_port = port; };
-    void UnsetPort() { m_port = ""; };
-    void SetWay(const std::string& way) { m_way = way; };
-    void UnsetWay() { m_way = ""; };
+    void SetPathLetter(const std::string& pathLetter) { m_pathLetter = pathLetter; };
+    void SetActive(const bool& isActive) { m_isActive = isActive; };
 
 private:
     /* configuration properties */
     std::string m_clientIp;
     std::string m_port;
-    std::string m_way;
+    std::string m_pathLetter;
+    bool m_isActive = false;
 };
 
 class IEC104ServerRedGroup
@@ -55,8 +56,6 @@ public:
     /// @param port The port. Default value = ""
     /// @return std::shared_ptr<RedGroupCon>
     std::shared_ptr<RedGroupCon> GetRedGroupCon(const std::string& ip, const std::string &port="");
-
-    bool AreConnectionsClosed();
 
 private:
 

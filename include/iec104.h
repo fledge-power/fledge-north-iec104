@@ -108,7 +108,7 @@ private:
 
     std::vector<IEC104OutstandingCommand*> m_outstandingCommands;
     std::mutex m_outstandingCommandsLock;
-
+    std::recursive_mutex m_connectionEventsLock; // Lock used in audits, based on connections events from lib60870
     std::map<int, std::map<int, IEC104DataPoint*>> m_exchangeDefinitions;
     
     IEC104DataPoint* m_getDataPoint(int ca, int ioa, int typeId);
@@ -146,8 +146,20 @@ private:
     static void connectionEventHandler(void* parameter, IMasterConnection con,
                                        CS104_PeerConnectionEvent event);
 
-    void sendConnectionStatusAudit(const std::string& auditType, const std::string& redGroupIndex, const std::string& way);
-    bool prepareConnections();
+    /**
+     * @brief Send an audit for the connection status of a specific connection
+     */
+    void sendConnectionStatusAudit(const std::string& auditType, const std::string& redGroupIndex, const std::string& pathLetter);
+
+    /**
+     * @brief Send an audit for the global connection status
+     */
+    void sendGlobalStatusAudit(const std::string& auditType);
+
+    /**
+     * @brief Send initial audits and cap the total amounts of connections in lib60870
+     */
+    void sendInitialAudits();
 
     CS104_Slave m_slave{};
     TLSConfiguration m_tlsConfig = nullptr;
@@ -165,7 +177,8 @@ private:
 
     bool createTLSConfiguration();
     std::string m_service_name;    // Service name used to generate audits
-    std::string m_last_audit;      // Last audit sent. Prevent from sending the same audit multiple times
+    std::string m_last_connection_audit;      // Last audit sent. Prevent from sending the same audit multiple times
+    std::string m_last_global_audit;      // Last global audit sent. Prevent from sending the same audit multiple times
 };
 
 #endif
