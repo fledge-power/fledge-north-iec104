@@ -240,6 +240,7 @@ protected:
         uint16_t port = IEC_60870_5_104_DEFAULT_PORT;
         // Create connection
         connection = CS104_Connection_create(ip, port);
+        ASSERT_NE(connection, nullptr);
     }
 
     // TearDown is ran for every tests, so each variable are destroyed again

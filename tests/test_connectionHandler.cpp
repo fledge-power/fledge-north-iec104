@@ -1594,6 +1594,7 @@ TEST_F(ConnectionHandlerTest, NormalConnection)
 
     // Create connection
     connection = CS104_Connection_create("127.0.0.1", IEC_60870_5_104_DEFAULT_PORT);
+    ASSERT_NE(connection, nullptr);
 
     bool result = CS104_Connection_connect(connection);
     ASSERT_TRUE(result);
@@ -1725,6 +1726,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionNoClientCertificates)
     // Create connection
 
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -1766,6 +1768,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionEmptyClientCertificates)
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -1794,6 +1797,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionEmptyClientKey)
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -1822,6 +1826,7 @@ TEST_F(ConnectionHandlerTest, TLSConnection)
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -1850,6 +1855,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionEmptyClientCACert)
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls_3 );
     ASSERT_TRUE(iec104Server->startSlave());
@@ -1878,6 +1884,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionEmptyClientRemoteCert)
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -1905,6 +1912,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionNoRemoteOrCaCertificate)
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls_4);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -1933,6 +1941,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionNoCaCertificate)
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls_3);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -1961,6 +1970,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionKeyNotFound)
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -1989,6 +1999,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionOwnCertNotFound)
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2017,6 +2028,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionCACertNotFound)
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2045,6 +2057,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionRemoteCertNotFound)
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2076,6 +2089,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionKeyDotKeyCertificateDotCert) {
     TLSConfiguration_setAllowOnlyKnownCertificates(tlsConfig, false);
 
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls_test1);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2103,6 +2117,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionKeyDotKeyCertificateDotCrt) {
     TLSConfiguration_setAllowOnlyKnownCertificates(tlsConfig, false);
 
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls_test2);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2131,6 +2146,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionKeyDotKeyCertificateDotP12) {
     TLSConfiguration_setAllowOnlyKnownCertificates(tlsConfig, false);
 
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls_test4);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2158,6 +2174,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionKeyDotKeyCertificateDotDer) {
     TLSConfiguration_setAllowOnlyKnownCertificates(tlsConfig, false);
 
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls_test5);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2185,6 +2202,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionKeyDotPemCertificateDotCert) {
     TLSConfiguration_setAllowOnlyKnownCertificates(tlsConfig, false);
 
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls_test6);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2213,6 +2231,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionKeyDotPemCertificateDotP12) {
     TLSConfiguration_setAllowOnlyKnownCertificates(tlsConfig, false);
 
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls_test9);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2240,6 +2259,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionKeyDotPemCertificateDotDer) {
     TLSConfiguration_setAllowOnlyKnownCertificates(tlsConfig, false);
 
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls_test10);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2273,6 +2293,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionNoChainValidation_CF_ST) {
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2301,6 +2322,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionNoChainValidation_CF_SF) {
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls_2);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2337,6 +2359,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionOnlyKnownCertsFalse) {
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls_test1);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2364,6 +2387,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionNoServerCertificates) {
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls_6);
     ASSERT_FALSE(iec104Server->startSlave());
@@ -2391,6 +2415,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionNoServerCACertificate) {
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls_4);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2418,6 +2443,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionServerCACertificateDoesntExist) {
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls_9);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2445,6 +2471,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionWrongServerCACertificate) {
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls_7);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2485,6 +2512,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionStackRedundancyGroupsNotArray) {
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_3, exchanged_data, tls);
     ASSERT_TRUE(iec104Server->startSlave());
@@ -2512,6 +2540,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionExchangeDataWrongDatapoints) {
 
     // Create connection
     connection = CS104_Connection_createSecure("127.0.0.1", IEC_60870_5_104_DEFAULT_TLS_PORT, tlsConfig);
+    ASSERT_NE(connection, nullptr);
 
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data_2, tls);
     ASSERT_TRUE(iec104Server->startSlave());

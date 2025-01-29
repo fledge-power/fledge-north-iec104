@@ -156,6 +156,7 @@ protected:
 
         // Create connection
         connection = CS104_Connection_create(ip, port);
+        ASSERT_NE(connection, nullptr);
 
         receivedAsdus = LinkedList_create();
     }

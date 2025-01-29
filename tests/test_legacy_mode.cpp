@@ -230,6 +230,7 @@ protected:
         uint16_t port = IEC_60870_5_104_DEFAULT_PORT;
         // Create connection
         connection = CS104_Connection_create(ip, port);
+        ASSERT_NE(connection, nullptr);
 
         CS104_Connection_setASDUReceivedHandler(connection, m_asduReceivedHandler, this);
     }
