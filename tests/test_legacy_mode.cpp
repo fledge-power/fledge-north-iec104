@@ -230,6 +230,7 @@ protected:
         uint16_t port = IEC_60870_5_104_DEFAULT_PORT;
         // Create connection
         connection = CS104_Connection_create(ip, port);
+        ASSERT_NE(connection, nullptr);
 
         CS104_Connection_setASDUReceivedHandler(connection, m_asduReceivedHandler, this);
     }
@@ -416,7 +417,7 @@ TEST_F(LegacyModeTest, ConnectWhileSouthNotStarted)
     iec104Server->registerControl(operateHandler);
 
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     Thread_sleep(500); /* wait for the server to start */
 

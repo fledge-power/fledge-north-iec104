@@ -407,6 +407,7 @@ protected:
         uint16_t port = IEC_60870_5_104_DEFAULT_PORT;
         // Create connection
         connection = CS104_Connection_create(ip, port);
+        ASSERT_NE(connection, nullptr);
     }
 
     // TearDown is ran for every tests, so each variable are destroyed again
@@ -471,7 +472,7 @@ TEST_F(InterrogationHandlerTest, InterrogationHandlerSingleCA)
     receivedASDUs = LinkedList_create();
 
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     Thread_sleep(500); /* wait for the server to start */
 
@@ -546,7 +547,7 @@ TEST_F(InterrogationHandlerTest, InterrogationHandlerBroadcastCA)
     receivedASDUs = LinkedList_create();
 
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     Thread_sleep(500); /* wait for the server to start */
 
@@ -680,7 +681,7 @@ TEST_F(InterrogationHandlerTest, InterrogationForUnknownCA)
     receivedASDUs = LinkedList_create();
 
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     Thread_sleep(500); /* wait for the server to start */
 
@@ -720,7 +721,7 @@ TEST_F(InterrogationHandlerTest, InterrogationHandlerSingleCAGIGroups)
     receivedASDUs = LinkedList_create();
 
     iec104Server->setJsonConfig(protocol_stack, exchanged_data_2, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     Thread_sleep(500); /* wait for the server to start */
 

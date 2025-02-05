@@ -358,6 +358,7 @@ protected:
         uint16_t port = IEC_60870_5_104_DEFAULT_PORT;
         // Create connection
         connection = CS104_Connection_create(ip, port);
+        ASSERT_NE(connection, nullptr);
 
         CS104_Connection_setASDUReceivedHandler(connection, m_asduReceivedHandler, this);
     }
@@ -1224,7 +1225,7 @@ ControlTest::ForwardCommandAck(const char* cmdName, const char* type, int ca, in
 TEST_F(ControlTest, CreateReading)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     auto* dataobjects = new vector<Datapoint*>;
 
@@ -1247,7 +1248,7 @@ TEST_F(ControlTest, CreateReading)
 TEST_F(ControlTest, ReceiveSinglePointCommand)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerSingleCommand);
 
@@ -1271,7 +1272,7 @@ TEST_F(ControlTest, ReceiveSinglePointCommand)
 TEST_F(ControlTest, ReceiveSetpointCommandShortWithTimestamp)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data_2, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerReceiveSetpointCommandShortWithTimestamp);
 
@@ -1302,7 +1303,7 @@ TEST_F(ControlTest, ReceiveSetpointCommandShortWithTimestamp)
 TEST_F(ControlTest, ReceiveSetpointCommandShortWithInvalidTimestamp)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data_2, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerReceiveSetpointCommandShortWithInvalidTimestamp);
 
@@ -1341,7 +1342,7 @@ TEST_F(ControlTest, ReceiveSetpointCommandShortWithInvalidTimestamp)
 TEST_F(ControlTest, SinglePointCommandUnknownCA)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerSinglePointCommandUnknownCA);
 
@@ -1365,7 +1366,7 @@ TEST_F(ControlTest, SinglePointCommandUnknownCA)
 TEST_F(ControlTest, ReceiveUnexpectedDoublePointCommand)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerReceiveUnexpectedDoublePointCommand);
 
@@ -1389,7 +1390,7 @@ TEST_F(ControlTest, ReceiveUnexpectedDoublePointCommand)
 TEST_F(ControlTest, CommandAckTimeout)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerCommandAckTimeout);
 
@@ -1416,7 +1417,7 @@ TEST_F(ControlTest, CommandAckTimeout)
 TEST_F(ControlTest, CommandActCon)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerCommandActCon);
 
@@ -1458,7 +1459,7 @@ TEST_F(ControlTest, CommandActCon)
 TEST_F(ControlTest, CommandActConNegative)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerCommandActConNegative);
 
@@ -1495,7 +1496,7 @@ TEST_F(ControlTest, CommandActConNegative)
 TEST_F(ControlTest, SinglePointCommandIOMissing)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerSinglePointCommandIOMissing);
 
@@ -1523,7 +1524,7 @@ TEST_F(ControlTest, SinglePointCommandIOMissing)
 TEST_F(ControlTest, ReceiveSinglePointCommandWithTime)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerReceiveSinglePointCommandWithTime);
 
@@ -1564,7 +1565,7 @@ TEST_F(ControlTest, ReceiveSinglePointCommandWithTime)
 TEST_F(ControlTest, ReceiveDoublePointCommand)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerDoublePointCommand);
 
@@ -1588,7 +1589,7 @@ TEST_F(ControlTest, ReceiveDoublePointCommand)
 TEST_F(ControlTest, ReceiveDoublePointCommandWithTime)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerDoublePointCommandWithTime);
 
@@ -1630,7 +1631,7 @@ TEST_F(ControlTest, ReceiveDoublePointCommandWithTime)
 TEST_F(ControlTest, ReceiveMultipleSinglePointCommandWithTime)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerMultipleSinglePointCommandWithTime);
 
@@ -1695,7 +1696,7 @@ TEST_F(ControlTest, ReceiveMultipleSinglePointCommandWithTime)
 TEST_F(ControlTest, ReceiveStepPointCommand)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerStepPointCommand);
 
@@ -1720,7 +1721,7 @@ TEST_F(ControlTest, ReceiveStepPointCommand)
 TEST_F(ControlTest, ReceiveStepPointCommandWithTime)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerStepPointCommandWithTime);
 
@@ -1761,7 +1762,7 @@ TEST_F(ControlTest, ReceiveStepPointCommandWithTime)
 TEST_F(ControlTest, ReceiveSetPointCommandNormalized)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerSetPointCommandNormalized);
 
@@ -1785,7 +1786,7 @@ TEST_F(ControlTest, ReceiveSetPointCommandNormalized)
 TEST_F(ControlTest, ReceiveSetPointCommandNormalizedWithTime)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerSetPointCommandNormalizedWithTime);
 
@@ -1827,7 +1828,7 @@ TEST_F(ControlTest, ReceiveSetPointCommandNormalizedWithTime)
 TEST_F(ControlTest, ReceiveSetPointCommandScaled)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerSetPointCommandScaled);
 
@@ -1852,7 +1853,7 @@ TEST_F(ControlTest, ReceiveSetPointCommandScaled)
 TEST_F(ControlTest, ReceiveSetPointCommandScaledWithTime)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerSetPointCommandScaledWithTime);
 
@@ -1893,7 +1894,7 @@ TEST_F(ControlTest, ReceiveSetPointCommandScaledWithTime)
 TEST_F(ControlTest, ReceiveSetPointCommandShort)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     iec104Server->registerControl(operateHandlerSetPointCommandShort);
 

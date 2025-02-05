@@ -82,7 +82,7 @@ public:
                                 const std::string& tlsConfig);
 
     void configure(const ConfigCategory* conf);
-    void startSlave();
+    bool startSlave();
     uint32_t send(const std::vector<Reading*>& readings);
     void stop();
 
