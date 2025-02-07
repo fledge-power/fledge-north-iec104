@@ -359,7 +359,7 @@ IEC104Server::sendInitialAudits()
         auto& connections = redGroup->Connections();
         for (int j = 0; j < connections.size(); j++) {
             auto connection = connections[j];
-            Iec104Utility::log_debug("%s Found redundancy group %d - Connection %d: %s : %s", i, j, beforeLog.c_str(), connection->ClientIP().c_str(), connection->Port().c_str());
+            Iec104Utility::log_debug("%s Found redundancy group %d - Connection %d: %s : %s", beforeLog.c_str(), i, j, connection->ClientIP().c_str(), connection->Port().c_str());
         }
     }
 }
