@@ -1391,15 +1391,15 @@ IEC104Server::send(const vector<Reading*>& readings)
                         timestamp = (uint64_t)attrVal.toInt();
                         hasTimestamp = true;
                     }
-                    else if (objDp->getName() == "dp_ts_iv") {
+                    else if (objDp->getName() == "do_ts_iv") {
                         if (attrVal.toInt() != 0)
                             ts_iv = true;
                     }
-                    else if (objDp->getName() == "dp_ts_su") {
+                    else if (objDp->getName() == "do_ts_su") {
                         if (attrVal.toInt() != 0)
                             ts_su = true;
                     }
-                    else if (objDp->getName() == "dp_ts_sub") {
+                    else if (objDp->getName() == "do_ts_sub") {
                         if (attrVal.toInt() != 0)
                             ts_sub = true;
                     }
