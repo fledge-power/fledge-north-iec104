@@ -116,7 +116,7 @@ private:
     void importTransportLayer(const rapidjson::Value& transportLayer);
     void importApplicationLayer(const rapidjson::Value& applicationLayer);
     void importRedundancyGroups(const rapidjson::Value& redundancyGroups);
-    void importRedundancyGroupConnections(const rapidjson::Value& connection, std::shared_ptr<IEC104ServerRedGroup> redundancyGroup);
+    void importRedundancyGroupConnections(const rapidjson::Value& connection, std::shared_ptr<IEC104ServerRedGroup> redundancyGroup) const;
 
     static bool isValidIPAddress(const std::string& addrStr);
 

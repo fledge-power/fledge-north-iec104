@@ -25,7 +25,7 @@ using namespace std;
 
 static bool running = true;
 
-static std::string conEvent2string[4] = {
+static const char* conEvent2string[4] = {
     "CS104_CON_EVENT_CONNECTION_OPENED",
     "CS104_CON_EVENT_CONNECTION_CLOSED",
     "CS104_CON_EVENT_ACTIVATED",
@@ -291,7 +291,7 @@ IEC104Server::setJsonConfig(const std::string& stackConfig,
         CS104_Slave_setConnectionEventHandler(m_slave, connectionEventHandler, this);
 
 
-        auto& redGroups = m_config->RedundancyGroups();
+        const auto& redGroups = m_config->RedundancyGroups();
         if (redGroups.empty()) {
             Iec104Utility::log_info("%s Activating single redundancy group mode", beforeLog.c_str()); //LCOV_EXCL_LINE
             CS104_Slave_setServerMode(m_slave, CS104_MODE_SINGLE_REDUNDANCY_GROUP);
@@ -315,7 +315,7 @@ void
 IEC104Server::sendInitialAudits()
 {
     std::string beforeLog = Iec104Utility::PluginName + " - IEC104Server::sendInitialAudits -";
-    auto& redGroups = m_config->RedundancyGroups();
+    const auto& redGroups = m_config->RedundancyGroups();
 
     auto configuredRedGroups = static_cast<int>(redGroups.size());
     int totalConnections = 0;
@@ -325,7 +325,7 @@ IEC104Server::sendInitialAudits()
 
         for (int j = 0; j < connections.size(); j++) {
             auto connection = connections[j];
-            connection->SetPathLetter((j == 0 ? "A" : "B"));
+            connection->SetPathLetter(j == 0 ? "A" : "B");
             sendConnectionStatusAudit("disconnected", std::to_string(i), connection->PathLetter());
         }
 
@@ -356,7 +356,7 @@ IEC104Server::sendInitialAudits()
     // Log every connection of every redundancy group
     for (int i = 0; i < configuredRedGroups; i++) {
         auto& redGroup = redGroups[i];
-        auto& connections = redGroup->Connections();
+        const auto& connections = redGroup->Connections();
         for (int j = 0; j < connections.size(); j++) {
             auto connection = connections[j];
             Iec104Utility::log_debug("%s Found redundancy group %d - Connection %d: %s : %s", beforeLog.c_str(), i, j, connection->ClientIP().c_str(), connection->Port().c_str());
@@ -2146,14 +2146,15 @@ IEC104Server::connectionEventHandler(void* parameter,
 
     // Extract ip and port
     std::string ipAddrStr(ipAddrBuf);
-    std::string ip, port;
+    std::string ip;
+    std::string port;
     size_t pos = ipAddrStr.find(':');
     if (pos != std::string::npos) {
         ip = ipAddrStr.substr(0, pos);
         port = ipAddrStr.substr(pos + 1);
     }
 
-    Iec104Utility::log_info("%s Received connection event %s on %s", beforeLog.c_str(), conEvent2string[(int)event].c_str(), ipAddrBuf);//LCOV_EXCL_LINE
+    Iec104Utility::log_info("%s Received connection event %s on %s", beforeLog.c_str(), conEvent2string[(int)event], ipAddrBuf);//LCOV_EXCL_LINE
 
     // Find the RedundancyGroup associated with the IP
     std::shared_ptr<IEC104ServerRedGroup> currentRedGroup = self->Config()->GetRedundancyGroup(ip);

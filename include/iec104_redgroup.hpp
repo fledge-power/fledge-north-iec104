@@ -11,7 +11,7 @@
 class RedGroupCon
 {
 public:
-    RedGroupCon(const std::string& clientIp);
+    explicit RedGroupCon(const std::string& clientIp);
     RedGroupCon(const std::string& clientIp, const std::string& port, const std::string &pathLetter);
     ~RedGroupCon() = default;
 
@@ -41,7 +41,7 @@ public:
 
     const std::string& Name() const {return m_name;};
     const CS104_RedundancyGroup& CS104RedGroup() const {return m_cs104RedGroup;};
-    const int Index() const {return m_index;};
+    int Index() const {return m_index;};
 
     std::vector<std::shared_ptr<RedGroupCon>>& Connections() {return m_connections;};
 

@@ -2,22 +2,12 @@
 
 using namespace std;
 
-RedGroupCon::RedGroupCon(const string& clientIp)
-{
-    m_clientIp = clientIp;
-    m_port = "";
-    m_pathLetter = "";
-}
+RedGroupCon::RedGroupCon(const string& clientIp) : m_clientIp(clientIp), m_port(""), m_pathLetter("") {}
 
 RedGroupCon::RedGroupCon(const string& clientIp, const std::string& port, const std::string& pathLetter)
     : m_clientIp(clientIp), m_port(port), m_pathLetter(pathLetter)  {}
 
-IEC104ServerRedGroup::IEC104ServerRedGroup(const std::string& name, int index, CS104_RedundancyGroup cs104RedGroup)
-{
-    m_name = name;
-    m_index = index;
-    m_cs104RedGroup = cs104RedGroup;
-}
+IEC104ServerRedGroup::IEC104ServerRedGroup(const std::string& name, int index, CS104_RedundancyGroup cs104RedGroup) : m_name(name), m_index(index), m_cs104RedGroup(cs104RedGroup) {}
 
 void IEC104ServerRedGroup::AddConnection(std::shared_ptr<RedGroupCon> con)
 {

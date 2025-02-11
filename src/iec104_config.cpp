@@ -72,7 +72,7 @@ IEC104Config::isValidIPAddress(const std::string& addrStr)
 }
 
 void
-IEC104Config::importRedundancyGroupConnections(const Value& connection, std::shared_ptr<IEC104ServerRedGroup> redundancyGroup)
+IEC104Config::importRedundancyGroupConnections(const Value& connection, std::shared_ptr<IEC104ServerRedGroup> redundancyGroup) const
 {
     std::string beforeLog = Iec104Utility::PluginName + " - IEC104Config::importRedundancyGroupConnections -";
 
