@@ -35,7 +35,8 @@ class DatapointValue;
 class InformationObject_RAII {
     public:
 
-    InformationObject_RAII(InformationObject io): m_io(io) {}
+    explicit InformationObject_RAII(InformationObject io): m_io(io) {}
+    InformationObject_RAII& operator=(InformationObject_RAII&&) = delete;
     ~InformationObject_RAII() {
         if (m_io) {
             InformationObject_destroy(m_io);
