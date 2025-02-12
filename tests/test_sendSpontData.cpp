@@ -1191,3 +1191,86 @@ TEST_F(SendSpontDataTest, CreateReading_M_ST_TB_1)
 
     delete dataobjects;
 }
+
+TEST_F(SendSpontDataTest, TimestampQuality)
+{
+    iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
+    ASSERT_TRUE(iec104Server->startSlave());
+
+    Thread_sleep(500); /* wait for the server to start */
+
+    CS104_Connection_setASDUReceivedHandler(connection, test1_ASDUReceivedHandler, this);
+
+    bool result = CS104_Connection_connect(connection);
+    ASSERT_TRUE(result);
+
+    CS104_Connection_sendStartDT(connection);
+
+    auto* dataobjects = new vector<Datapoint*>;
+
+    struct sCP56Time2a ts;
+    struct sCP56Time2a ts_iv;
+    struct sCP56Time2a ts_su;
+    struct sCP56Time2a ts_sub;
+
+    uint64_t timeVal = Hal_getTimeInMs();
+
+    CP56Time2a_createFromMsTimestamp(&ts, timeVal);
+    CP56Time2a_createFromMsTimestamp(&ts_iv, timeVal);
+    CP56Time2a_createFromMsTimestamp(&ts_su, timeVal);
+    CP56Time2a_createFromMsTimestamp(&ts_sub, timeVal);
+
+    CP56Time2a_setInvalid(&ts_iv, true);
+    CP56Time2a_setSummerTime(&ts_su, true);
+    CP56Time2a_setSubstituted(&ts_sub, true);
+
+    dataobjects->push_back(createDataObject("M_SP_TB_1", 45, 674, CS101_COT_SPONTANEOUS, (int64_t)1, false, false, false, false, false, &ts));
+    dataobjects->push_back(createDataObject("M_SP_TB_1", 45, 674, CS101_COT_SPONTANEOUS, (int64_t)1, false, false, false, false, false, &ts_iv));
+    dataobjects->push_back(createDataObject("M_SP_TB_1", 45, 674, CS101_COT_SPONTANEOUS, (int64_t)1, false, false, false, false, false, &ts_su));
+    dataobjects->push_back(createDataObject("M_SP_TB_1", 45, 674, CS101_COT_SPONTANEOUS, (int64_t)1, false, false, false, false, false, &ts_sub));
+
+    Reading* reading = new Reading(std::string("TS3"), *dataobjects);
+
+    vector<Reading*> readings;
+
+    readings.push_back(reading);
+
+    iec104Server->send(readings);
+
+    Thread_sleep(500);
+
+    ASSERT_EQ(4, receivedAsdu.size());
+
+    bool expectedTimeStampFlags[][3] {
+        {false, false, false},
+        {true, false, false},
+        {false, true, true},
+        {false, false, true}
+    };
+
+    for (int i = 0; i < 4; i++)
+    {
+        CS101_ASDU asdu = receivedAsdu.at(i);
+        InformationObject io = CS101_ASDU_getElement(asdu, 0);
+        CP56Time2a rcvdTimestamp = SinglePointWithCP56Time2a_getTimestamp((SinglePointWithCP56Time2a)io);
+        bool timeStampFlags[3] = {CP56Time2a_isInvalid(rcvdTimestamp), CP56Time2a_isSummerTime(rcvdTimestamp), CP56Time2a_isSubstituted(rcvdTimestamp)}; 
+        printf("Checking ASDU received - CA: %i COT: %i - do_ts_iv : %d, do_ts_su : %d, do_ts_sub : %d\n", CS101_ASDU_getCA(asdu), CS101_ASDU_getCOT(asdu), 
+          (int)timeStampFlags[0], (int)timeStampFlags[1], (int)timeStampFlags[2]);
+
+        // Check that the frame is valid
+        ASSERT_EQ(M_SP_TB_1, CS101_ASDU_getTypeID(asdu));
+        ASSERT_EQ(45, CS101_ASDU_getCA(asdu));
+        ASSERT_EQ(1, CS101_ASDU_getNumberOfElements(asdu));
+        ASSERT_EQ(674, InformationObject_getObjectAddress(io));
+        ASSERT_EQ(timeVal, CP56Time2a_toMsTimestamp(rcvdTimestamp));
+        ASSERT_EQ(true, SinglePointInformation_getValue((SinglePointInformation)io));
+
+        // Check that the timestamps are the ones expected
+        ASSERT_EQ(timeStampFlags[0], expectedTimeStampFlags[i][0]);
+        InformationObject_destroy(io);
+    }
+
+    delete reading;
+
+    delete dataobjects;
+}
