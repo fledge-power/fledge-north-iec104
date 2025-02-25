@@ -241,6 +241,7 @@ PLUGIN_HANDLE plugin_init(ConfigCategory* configData)
 	IEC104Server* iec104 = new IEC104Server();
 
     if (iec104) {
+        iec104->setServiceName(configData->getName());
     	iec104->configure(configData);
     }
 

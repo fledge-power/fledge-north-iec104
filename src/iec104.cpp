@@ -19,11 +19,18 @@
 #include "iec104.h"
 #include "iec104_utility.hpp"
 #include "iec104_datapoint.hpp"
-
+#include "iec104_redgroup.hpp"
 
 using namespace std;
 
 static bool running = true;
+
+static const char* conEvent2string[4] = {
+    "CS104_CON_EVENT_CONNECTION_OPENED",
+    "CS104_CON_EVENT_CONNECTION_CLOSED",
+    "CS104_CON_EVENT_ACTIVATED",
+    "CS104_CON_EVENT_DEACTIVATED"
+};
 
 IEC104Server::IEC104Server() :
     m_config(new IEC104Config())
@@ -283,27 +290,77 @@ IEC104Server::setJsonConfig(const std::string& stackConfig,
         /* set handler to track connection events */
         CS104_Slave_setConnectionEventHandler(m_slave, connectionEventHandler, this);
 
-        auto redGroups = m_config->getRedGroups();
 
+        const auto& redGroups = m_config->RedundancyGroups();
         if (redGroups.empty()) {
             Iec104Utility::log_info("%s Activating single redundancy group mode", beforeLog.c_str()); //LCOV_EXCL_LINE
             CS104_Slave_setServerMode(m_slave, CS104_MODE_SINGLE_REDUNDANCY_GROUP);
         }
         else {
-            Iec104Utility::log_info("%s Activating multiple redundancy groups mode (%d groups configured)", beforeLog.c_str(),
-                                    redGroups.size()); //LCOV_EXCL_LINE
+            Iec104Utility::log_info("%s Activating multiple redundancy groups mode (%d groups configured)", beforeLog.c_str(), redGroups.size()); //LCOV_EXCL_LINE
             CS104_Slave_setServerMode(m_slave, CS104_MODE_MULTIPLE_REDUNDANCY_GROUPS);
 
-            for (CS104_RedundancyGroup redGroup : redGroups) {
-                CS104_Slave_addRedundancyGroup(m_slave, redGroup);
+            for (const auto& redGroup : redGroups) {
+                CS104_Slave_addRedundancyGroup(m_slave, redGroup->CS104RedGroup());
             }
         }
-
-
         Iec104Utility::log_info("%s CS104 server initialized", beforeLog.c_str()); //LCOV_EXCL_LINE
     }
     else {
         Iec104Utility::log_error("%s Failed to create CS104 server instance", beforeLog.c_str()); //LCOV_EXCL_LINE
+    }
+}
+
+void
+IEC104Server::sendInitialAudits()
+{
+    std::string beforeLog = Iec104Utility::PluginName + " - IEC104Server::sendInitialAudits -";
+    const auto& redGroups = m_config->RedundancyGroups();
+
+    auto configuredRedGroups = static_cast<int>(redGroups.size());
+    int totalConnections = 0;
+    for (int i = 0; i < configuredRedGroups; i++) {
+        auto& redGroup = redGroups[i];
+        auto& connections = redGroup->Connections();
+
+        for (int j = 0; j < connections.size(); j++) {
+            auto connection = connections[j];
+            connection->SetPathLetter(j == 0 ? "A" : "B");
+            sendConnectionStatusAudit("disconnected", std::to_string(i), connection->PathLetter());
+        }
+
+        // Send initial path connection status audit
+        auto configuredConnections = static_cast<int>(connections.size());
+        totalConnections += configuredConnections;
+        if (configuredConnections == 0) {
+            sendConnectionStatusAudit("unused", std::to_string(i), "A");
+            sendConnectionStatusAudit("unused", std::to_string(i), "B");
+        } else if (configuredConnections == 1) {
+            sendConnectionStatusAudit("unused", std::to_string(i), "B");
+        }
+    }
+    // This line is needed to prevent the slave from creating more connections than configured
+    // The connections would not be used by fledge-north-iec104 but they would trigger connection events, in turn triggering audits.
+    CS104_Slave_setMaxOpenConnections(m_slave, totalConnections);
+
+    // Send initial path connection status audit
+    int maxRedGroups = m_config->GetMaxRedGroups();
+    for (int i = configuredRedGroups; i < maxRedGroups; i++) {
+        sendConnectionStatusAudit("unused", std::to_string(i), "A");
+        sendConnectionStatusAudit("unused", std::to_string(i), "B");
+    }
+
+    // Send initial global status audit
+    sendGlobalStatusAudit("disconnected");
+
+    // Log every connection of every redundancy group
+    for (int i = 0; i < configuredRedGroups; i++) {
+        auto& redGroup = redGroups[i];
+        const auto& connections = redGroup->Connections();
+        for (int j = 0; j < connections.size(); j++) {
+            auto connection = connections[j];
+            Iec104Utility::log_debug("%s Found redundancy group %d - Connection %d: %s : %s", beforeLog.c_str(), i, j, connection->ClientIP().c_str(), connection->Port().c_str());
+        }
     }
 }
 
@@ -314,7 +371,7 @@ IEC104Server::startSlave(){
         Iec104Utility::log_error("%s CS104 server instance not available, cannot start monitoring thread", beforeLog.c_str()); //LCOV_EXCL_LINE
         return false;
     }
-
+    sendInitialAudits();
     m_started = true;
     m_monitoringThread = new std::thread(&IEC104Server::_monitoringThread, this);
     return true;
@@ -2077,33 +2134,71 @@ IEC104Server::connectionEventHandler(void* parameter,
 {
     std::string beforeLog = Iec104Utility::PluginName + " - IEC104Server::connectionEventHandler -";
     IEC104Server* self = (IEC104Server*)parameter;
+    std::lock_guard<std::recursive_mutex> lock(self->m_connectionEventsLock);
 
     char ipAddrBuf[100];
     ipAddrBuf[0] = 0;
 
     IMasterConnection_getPeerAddress(con, ipAddrBuf, 100);
 
+    // Extract ip and port
+    std::string ipAddrStr(ipAddrBuf);
+    std::string ip;
+    std::string port;
+    size_t pos = ipAddrStr.find(':');
+    if (pos != std::string::npos) {
+        ip = ipAddrStr.substr(0, pos);
+        port = ipAddrStr.substr(pos + 1);
+    }
+
+    Iec104Utility::log_info("%s Received connection event %s on %s", beforeLog.c_str(), conEvent2string[(int)event], ipAddrBuf);//LCOV_EXCL_LINE
+
+    // Find the RedundancyGroup associated with the IP
+    std::shared_ptr<IEC104ServerRedGroup> currentRedGroup = self->Config()->GetRedundancyGroup(ip);
+    if (currentRedGroup == nullptr) {
+        Iec104Utility::log_error("%s Redundancy group not found for IP %s", beforeLog.c_str(), ipAddrBuf);//LCOV_EXCL_LINE
+        return;
+    }
+
+    // Find the RedGroupCon associated with the IP and PORT
+    std::shared_ptr<RedGroupCon> currentConnection = currentRedGroup->GetRedGroupCon(ip, port);
+    if (currentConnection == nullptr) {
+        // RedGroupCon was not found with the given PORT, meaning this connection is a new one !
+        // Search for the first available RedGroupCon with an empty PORT
+        currentConnection = currentRedGroup->GetRedGroupCon(ip);
+        if (currentConnection == nullptr) {
+            Iec104Utility::log_error("%s Redundancy group connection not found for IP %s", beforeLog.c_str(), ipAddrBuf);//LCOV_EXCL_LINE
+            return;
+        }
+        currentConnection->SetPort(port);
+    }
+
     if (event == CS104_CON_EVENT_CONNECTION_OPENED)
     {
-        Iec104Utility::log_info("%s Connection opened (%s)", beforeLog.c_str(), ipAddrBuf); //LCOV_EXCL_LINE
-        Iec104Utility::audit_success("NHAVL", std::string(beforeLog) + std::string(ipAddrBuf) + " connection opened");
+        self->sendConnectionStatusAudit("passive", std::to_string(currentRedGroup->Index()), currentConnection->PathLetter());
     }
     else if (event == CS104_CON_EVENT_CONNECTION_CLOSED)
     {
-        Iec104Utility::log_info("%s Connection closed (%s)", beforeLog.c_str(), ipAddrBuf);//LCOV_EXCL_LINE
-        Iec104Utility::audit_fail("NHDWN", std::string(beforeLog) + std::string(ipAddrBuf) + " connection closed");
+        self->sendConnectionStatusAudit("disconnected", std::to_string(currentRedGroup->Index()), currentConnection->PathLetter());
+        currentConnection->SetPort("");
         self->removeOutstandingCommands(con);
+
+        // If another connection is available to become active, the switch is made before this connection is closed
+        if(currentConnection->isActive()){
+            self->sendGlobalStatusAudit("disconnected");
+        }
     }
     else if (event == CS104_CON_EVENT_ACTIVATED)
     {
-        Iec104Utility::log_info("%s Connection activated (%s)", beforeLog.c_str(), ipAddrBuf);//LCOV_EXCL_LINE
-        Iec104Utility::audit_info("NHAVL", std::string(beforeLog) + std::string(ipAddrBuf) + " connection activated");
+        self->sendConnectionStatusAudit("active", std::to_string(currentRedGroup->Index()), currentConnection->PathLetter());
+        self->sendGlobalStatusAudit("connected");
+        currentConnection->SetActive(true);
     }
     else if (event == CS104_CON_EVENT_DEACTIVATED)
     {
-        Iec104Utility::log_info("%s Connection deactivated (%s)", beforeLog.c_str(), ipAddrBuf);//LCOV_EXCL_LINE
-        Iec104Utility::audit_info("NHDWN", std::string(beforeLog) + std::string(ipAddrBuf) + " connection deactivated");
+        self->sendConnectionStatusAudit("passive", std::to_string(currentRedGroup->Index()), currentConnection->PathLetter());
         self->removeOutstandingCommands(con);
+        currentConnection->SetActive(false);
     }
 }
 
@@ -2140,4 +2235,42 @@ IEC104Server::stop()
         m_tlsConfig = nullptr;
     }
     Iec104Utility::log_info("%s IEC104 server stopped!", beforeLog.c_str());//LCOV_EXCL_LINE
+}
+
+void
+IEC104Server::sendConnectionStatusAudit(const std::string& auditType, const std::string& redGroupIndex, const std::string& pathLetter)
+{
+    std::lock_guard<std::recursive_mutex> lock(m_connectionEventsLock);
+    std::function<void(const std::string&, const std::string&, bool)> auditFn = Iec104Utility::audit_info;
+    if (auditType == "disconnected") {
+        auditFn = Iec104Utility::audit_fail;
+    }
+    else if (auditType == "passive" || auditType == "active") {
+        auditFn = Iec104Utility::audit_success;
+    }
+
+    std::string auditString = getServiceName() + "-" + redGroupIndex + "-" + pathLetter + "-" + auditType;
+    if (auditString == m_last_connection_audit) {
+        return;
+    }
+    auditFn("SRVFL", auditString, true);
+    m_last_connection_audit = auditString;
+}
+
+void
+IEC104Server::sendGlobalStatusAudit(const std::string& auditType)
+{
+    if (auditType == m_last_global_audit) {
+        return;
+    }
+
+    std::function<void(const std::string&, const std::string&, bool)> auditFn = Iec104Utility::audit_info;
+    if (auditType == "disconnected") {
+        auditFn = Iec104Utility::audit_fail;
+    }
+    else if (auditType == "connected") {
+        auditFn = Iec104Utility::audit_success;
+    }
+    auditFn("SRVFL", getServiceName() + "-" + auditType, true);
+    m_last_global_audit = auditType;
 }

@@ -3,10 +3,14 @@
 
 #include <map>
 #include <vector>
+#include <memory>
+#include <algorithm>
 
 #include <lib60870/cs104_slave.h>
+#include <rapidjson/document.h>
 
 class IEC104DataPoint;
+class IEC104ServerRedGroup;
 
 class IEC104Config
 {
@@ -21,7 +25,12 @@ public:
 
     std::map<int, std::map<int, IEC104DataPoint*>>* getExchangeDefinitions() {return m_exchangeDefinitions;};
 
-    std::vector<CS104_RedundancyGroup> getRedGroups() {return m_configuredRedundancyGroups;};
+    int GetMaxRedGroups() const {return m_maxRedundancyGroups;};
+    std::vector<std::shared_ptr<IEC104ServerRedGroup>>& RedundancyGroups() {return m_redundancyGroups;};
+    /// @brief Get the IEC104ServerRedGroup associated with the given IP
+    /// @param ip The client IP
+    /// @return std::shared_ptr<IEC104ServerRedGroup>
+    std::shared_ptr<IEC104ServerRedGroup> GetRedundancyGroup(const std::string& ip);
 
     int TcpPort();
     bool bindOnIp() {return m_bindOnIp;};
@@ -104,6 +113,11 @@ public:
 
 private:
 
+    void importTransportLayer(const rapidjson::Value& transportLayer);
+    void importApplicationLayer(const rapidjson::Value& applicationLayer);
+    void importRedundancyGroups(const rapidjson::Value& redundancyGroups);
+    void importRedundancyGroupConnections(const rapidjson::Value& connection, std::shared_ptr<IEC104ServerRedGroup> redundancyGroup) const;
+
     static bool isValidIPAddress(const std::string& addrStr);
 
     void deleteExchangeDefinitions();
@@ -142,7 +156,8 @@ private:
 
     std::string m_cmdDest = "";
 
-    std::vector<CS104_RedundancyGroup> m_configuredRedundancyGroups;
+    int m_maxRedundancyGroups = 2;
+    std::vector<std::shared_ptr<IEC104ServerRedGroup>> m_redundancyGroups;
 
     std::vector<SouthPluginMonitor*> m_monitoredSouthPlugins;
 
