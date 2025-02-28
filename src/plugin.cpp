@@ -216,8 +216,8 @@ static PLUGIN_INFORMATION info = {
  */
 PLUGIN_INFORMATION *plugin_info()
 {
-    std::string beforeLog = Iec104Utility::PluginName + " - plugin_info -";
-    Iec104Utility::log_info("%s IEC104 Config is %s", beforeLog.c_str(), info.config);
+    std::string beforeLog = Iec104Utility::PluginName + " - plugin_info -"; //LCOV_EXCL_LINE
+    Iec104Utility::log_info("%s IEC104 Config is %s", beforeLog.c_str(), info.config); //LCOV_EXCL_LINE
 	return &info;
 }
 
@@ -228,11 +228,11 @@ PLUGIN_INFORMATION *plugin_info()
  */
 PLUGIN_HANDLE plugin_init(ConfigCategory* configData)
 {
-    std::string beforeLog = Iec104Utility::PluginName + " - plugin_init -";
-    Iec104Utility::log_info("%s Initializing the plugin", beforeLog.c_str());
+    std::string beforeLog = Iec104Utility::PluginName + " - plugin_init -"; //LCOV_EXCL_LINE
+    Iec104Utility::log_info("%s Initializing the plugin", beforeLog.c_str()); //LCOV_EXCL_LINE
 
     if (configData == nullptr) {
-        Iec104Utility::log_warn("%s No config provided for plugin, using default config", beforeLog.c_str());
+        Iec104Utility::log_warn("%s No config provided for plugin, using default config", beforeLog.c_str()); //LCOV_EXCL_LINE
         auto pluginInfo = plugin_info();
         configData = new ConfigCategory("newConfig", pluginInfo->config);
         configData->setItemsValueFromDefault();
@@ -241,10 +241,11 @@ PLUGIN_HANDLE plugin_init(ConfigCategory* configData)
 	IEC104Server* iec104 = new IEC104Server();
 
     if (iec104) {
+        iec104->setServiceName(configData->getName());
     	iec104->configure(configData);
     }
 
-    Iec104Utility::log_info("%s Plugin initialized", beforeLog.c_str());
+    Iec104Utility::log_info("%s Plugin initialized", beforeLog.c_str()); //LCOV_EXCL_LINE
 
 	return (PLUGIN_HANDLE)iec104;
 }
@@ -256,8 +257,8 @@ PLUGIN_HANDLE plugin_init(ConfigCategory* configData)
  * @param storedData	The stored plugin_data
  */
 void plugin_start(const PLUGIN_HANDLE handle, const string& storedData){
-    std::string beforeLog = Iec104Utility::PluginName + " - plugin_start -";
-    Iec104Utility::log_info("%s Plugin start called", beforeLog.c_str());
+    std::string beforeLog = Iec104Utility::PluginName + " - plugin_start -"; //LCOV_EXCL_LINE
+    Iec104Utility::log_info("%s Plugin start called", beforeLog.c_str()); //LCOV_EXCL_LINE
     IEC104Server* iec104 = (IEC104Server*)handle;
     if(iec104){
         iec104->startSlave();
@@ -270,8 +271,8 @@ void plugin_start(const PLUGIN_HANDLE handle, const string& storedData){
 uint32_t plugin_send(const PLUGIN_HANDLE handle,
 		     const vector<Reading *>& readings)
 {
-	std::string beforeLog = Iec104Utility::PluginName + " - plugin_send -";
-    Iec104Utility::log_info("%s Try sending %d readings to IEC104 server", beforeLog.c_str(), readings.size());
+	std::string beforeLog = Iec104Utility::PluginName + " - plugin_send -"; //LCOV_EXCL_LINE
+    Iec104Utility::log_info("%s Try sending %d readings to IEC104 server", beforeLog.c_str(), readings.size()); //LCOV_EXCL_LINE
 
     IEC104Server* iec104 = (IEC104Server *)handle;
 
@@ -283,8 +284,8 @@ void plugin_register(PLUGIN_HANDLE handle,
 		bool ( *write)(const char *name, const char *value, ControlDestination destination, ...),
 		int (* operation)(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...))
 {
-    std::string beforeLog = Iec104Utility::PluginName + " - plugin_register -";
-    Iec104Utility::log_info("%s Received new write and operation callbacks to regiter", beforeLog.c_str());
+    std::string beforeLog = Iec104Utility::PluginName + " - plugin_register -"; //LCOV_EXCL_LINE
+    Iec104Utility::log_info("%s Received new write and operation callbacks to regiter", beforeLog.c_str()); //LCOV_EXCL_LINE
 
     IEC104Server* iec104 = (IEC104Server*)handle;
 
@@ -300,8 +301,8 @@ void plugin_register(PLUGIN_HANDLE handle,
  */
 void plugin_shutdown(PLUGIN_HANDLE handle)
 {
-	std::string beforeLog = Iec104Utility::PluginName + " - plugin_shutdown -";
-    Iec104Utility::log_info("%s Shutting down the plugin...", beforeLog.c_str());
+	std::string beforeLog = Iec104Utility::PluginName + " - plugin_shutdown -"; //LCOV_EXCL_LINE
+    Iec104Utility::log_info("%s Shutting down the plugin...", beforeLog.c_str()); //LCOV_EXCL_LINE
 
     IEC104Server* iec104 = (IEC104Server*)handle;
 
