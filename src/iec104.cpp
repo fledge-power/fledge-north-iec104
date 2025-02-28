@@ -1348,7 +1348,6 @@ IEC104Server::validateCommand(IMasterConnection connection, CS101_ASDU asdu) {
         return true;
     }
 
-    bool sendResponse = true;
     bool acceptCommand = true;
     if (IEC104DataPoint::isCommandWithTimestamp(typeId)) {
         if (!m_config->AllowCmdWithTime()) {
@@ -1368,7 +1367,7 @@ IEC104Server::validateCommand(IMasterConnection connection, CS101_ASDU asdu) {
 
                 IMasterConnection_sendASDU(connection, asdu);
 
-                sendResponse = false;
+                return false;
             }
             else {
                 Iec104Utility::log_debug("%s command (%s) for %i:%i - Valid timestamp -> accept", beforeLog.c_str(),
@@ -1393,7 +1392,7 @@ IEC104Server::validateCommand(IMasterConnection connection, CS101_ASDU asdu) {
         }
         else {
             /* send ACT-CON later when south side feedback is received */
-            sendResponse = false;
+            return false;
         }
     }
     else {
@@ -1403,7 +1402,7 @@ IEC104Server::validateCommand(IMasterConnection connection, CS101_ASDU asdu) {
         CS101_ASDU_setNegative(asdu, true);
     }
     
-    return sendResponse;
+    return true;
 }
 
 /**
