@@ -465,10 +465,7 @@ IEC104Server::operation(char *operation, int paramCount, char *names[], char *pa
         res = m_oper(operation, paramCount, names, parameters, DestinationService, m_config->CmdDest().c_str());
     }
     Iec104Utility::log_debug("%s Operation returned %d", beforeLog.c_str(), res);
-    // Fledge operations always return -1 for now, this may be fixed by https://github.com/fledge-iot/fledge/issues/1210
-    // In the meantime consider they always succeed by returning 1 instead of res
-    // return res;
-    return 1;
+    return res;
 }
 
 bool
@@ -1333,6 +1330,138 @@ IEC104Server::updateSouthMonitoringInstance(Datapoint* dp, IEC104Config::SouthPl
 }
 
 /**
+ * Validate an ASDU command
+ *
+ * @param connection    The connection where the command was received 
+ * @param asdu	        The asdu to validate
+ * @return 		        True if a response should be sent, else false
+ */
+bool
+IEC104Server::validateCommand(IMasterConnection connection, CS101_ASDU asdu) {
+    std::string beforeLog = Iec104Utility::PluginName + " - IEC104Server::validateCommand -";
+    
+    IEC60870_5_TypeID typeId = CS101_ASDU_getTypeID(asdu);
+    if (!checkIfSouthConnected()) {
+        Iec104Utility::log_warn("%s command (%s) received while south plugin is not connected -> reject", beforeLog.c_str(),
+                                IEC104DataPoint::getStringFromTypeID(typeId).c_str());//LCOV_EXCL_LINE
+        CS101_ASDU_setCOT(asdu, CS101_COT_ACTIVATION_CON);
+        CS101_ASDU_setNegative(asdu, true);
+        return true;
+    }
+    
+    CS101_CauseOfTransmission cot = CS101_ASDU_getCOT(asdu);
+    if (cot != CS101_COT_ACTIVATION) {
+        Iec104Utility::log_warn("%s command (%s) - Unexpected COT: %d", beforeLog.c_str(),
+                                IEC104DataPoint::getStringFromTypeID(typeId).c_str(), cot);//LCOV_EXCL_LINE
+        CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_COT);
+        CS101_ASDU_setNegative(asdu, true);
+        return true;
+    }
+
+    InformationObject io = CS101_ASDU_getElement(asdu, 0);
+    InformationObject_RAII io_raii(io);
+    if (!io) {
+        Iec104Utility::log_warn("%s command (%s) - Unknown type or information object missing", beforeLog.c_str(),
+                                IEC104DataPoint::getStringFromTypeID(typeId).c_str()); //LCOV_EXCL_LINE
+        CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_TYPE_ID);
+        CS101_ASDU_setNegative(asdu, true);
+        return true;
+    }
+
+    int ca = CS101_ASDU_getCA(asdu);
+    std::map<int, IEC104DataPoint*> ld = m_exchangeDefinitions[ca];
+    if (ld.empty()) {
+        Iec104Utility::log_warn("%s command (%s) - Unknown CA: %i", beforeLog.c_str(),
+                                IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca); //LCOV_EXCL_LINE
+        CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_CA);
+        CS101_ASDU_setNegative(asdu, true);
+        return true;
+    }
+
+    /* check if command has an allowed OA */
+    int oa = CS101_ASDU_getOA(asdu);
+    if (!m_config->IsOriginatorAllowed(oa)) {
+        Iec104Utility::log_warn("%s command (%s) for %i - Originator address %i not allowed", beforeLog.c_str(),
+                                IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, oa); //LCOV_EXCL_LINE
+        CS101_ASDU_setCOT(asdu, CS101_COT_ACTIVATION_CON);
+        CS101_ASDU_setNegative(asdu, true);
+        return true;
+    }
+
+    int ioa = InformationObject_getObjectAddress(io);
+    IEC104DataPoint* dp = ld[ioa];
+    if (!dp) {
+        Iec104Utility::log_warn("%s command (%s) for %i:%i - Unknown IOA", beforeLog.c_str(),
+                                IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa); //LCOV_EXCL_LINE
+        CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_IOA);
+        CS101_ASDU_setNegative(asdu, true);
+        return true;
+    }
+    if (!dp->isMatchingCommand(typeId)) {
+        Iec104Utility::log_warn("%s command (%s) for %i:%i - Unknown command type %d", beforeLog.c_str(),
+                                IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa, typeId); //LCOV_EXCL_LINE
+        CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_TYPE_ID);
+        CS101_ASDU_setNegative(asdu, true);
+        return true;
+    }
+
+    bool acceptCommand = true;
+    if (IEC104DataPoint::isCommandWithTimestamp(typeId)) {
+        if (!m_config->AllowCmdWithTime()) {
+            Iec104Utility::log_warn("%s command (%s) for %i:%i - Commands with timestamp are not allowed", beforeLog.c_str(),
+                                    IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa); //LCOV_EXCL_LINE
+            acceptCommand = false;
+        }
+        else {
+            if (!checkIfCmdTimeIsValid(typeId, io)) {
+                Iec104Utility::log_warn("%s command (%s) for %i:%i - Invalid timestamp -> ignore", beforeLog.c_str(),
+                                        IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa);//LCOV_EXCL_LINE
+                                        
+                /* send negative response -> according to IEC 60870-5-104 the command should be silently ignored instead! */
+                CS101_ASDU_setCOT(asdu, CS101_COT_ACTIVATION_CON);
+                CS101_ASDU_setNegative(asdu, true);
+
+                IMasterConnection_sendASDU(connection, asdu);
+
+                return false;
+            }
+            else {
+                Iec104Utility::log_debug("%s command (%s) for %i:%i - Valid timestamp -> accept", beforeLog.c_str(),
+                                        IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa);//LCOV_EXCL_LINE
+            }
+        }
+    }
+    else {
+        if (!m_config->AllowCmdWithoutTime()) {
+            Iec104Utility::log_warn("%s command (%s) for %i:%i - Commands without timestamp are not allowed", beforeLog.c_str(),
+                                    IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa); //LCOV_EXCL_LINE
+            acceptCommand = false;
+        }
+    }
+
+    if (acceptCommand) {
+        CS101_ASDU_setCOT(asdu, CS101_COT_ACTIVATION_CON);
+        if (!forwardCommand(asdu, io, connection)) {
+            Iec104Utility::log_warn("%s command (%s) for %i:%i - Failed to forward command, set negative response", beforeLog.c_str(),
+                                    IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa); //LCOV_EXCL_LINE
+            CS101_ASDU_setNegative(asdu, true);       
+        }
+        else {
+            /* send ACT-CON later when south side feedback is received */
+            return false;
+        }
+    }
+    else {
+        Iec104Utility::log_warn("%s command (%s) for %i:%i - Command not accepted", beforeLog.c_str(),
+                                IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa); //LCOV_EXCL_LINE
+        CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_TYPE_ID);
+        CS101_ASDU_setNegative(asdu, true);
+    }
+    
+    return true;
+}
+
+/**
  * Send a block of reading to IEC104 Server
  *
  * @param readings	The readings to send
@@ -1958,149 +2087,23 @@ IEC104Server::asduHandler(void* parameter, IMasterConnection connection,
     IEC104Server* self = (IEC104Server*)parameter;
 
     IEC60870_5_TypeID typeId = CS101_ASDU_getTypeID(asdu);
-    if (isSupportedCommandType(typeId))
-    {
-        Iec104Utility::log_info("%s Received command of type %s", beforeLog.c_str(),
-                                IEC104DataPoint::getStringFromTypeID(typeId).c_str());//LCOV_EXCL_LINE
-
-        bool sendResponse = true;
-
-        CS101_CauseOfTransmission cot = CS101_ASDU_getCOT(asdu);
-        if (cot == CS101_COT_ACTIVATION)
-        {
-            InformationObject io = CS101_ASDU_getElement(asdu, 0);
-
-            if (io) {
-
-                int ca = CS101_ASDU_getCA(asdu);
-
-                std::map<int, IEC104DataPoint*> ld = self->m_exchangeDefinitions[ca];
-
-                if (!ld.empty()) {
-                    /* check if command has an allowed OA */
-                    int oa = CS101_ASDU_getOA(asdu);
-                    if (self->m_config->IsOriginatorAllowed(oa))
-                    {
-                        int ioa = InformationObject_getObjectAddress(io);
-
-                        IEC104DataPoint* dp = ld[ioa];
-
-                        if (dp)
-                        {
-                            if (dp->isMatchingCommand(typeId)) {
-
-                                bool acceptCommand = true;
-
-                                if (IEC104DataPoint::isCommandWithTimestamp(typeId)) {
-                                    if (!self->m_config->AllowCmdWithTime()) {
-                                        Iec104Utility::log_warn("%s command (%s) for %i:%i - Commands with timestamp are not allowed",
-                                                                beforeLog.c_str(),
-                                                                IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa); //LCOV_EXCL_LINE
-                                        acceptCommand = false;
-                                    }
-                                    else {
-                                        if (!self->checkIfCmdTimeIsValid(typeId, io)) {
-                                            Iec104Utility::log_warn("%s command (%s) for %i:%i - Invalid timestamp -> ignore",
-                                                                    beforeLog.c_str(),
-                                                                    IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa);//LCOV_EXCL_LINE
-                                            acceptCommand = false;
-
-                                            /* send negative response -> according to IEC 60870-5-104 the command should be silently ignored instead! */
-                                            CS101_ASDU_setCOT(asdu, CS101_COT_ACTIVATION_CON);
-                                            CS101_ASDU_setNegative(asdu, true);
-
-                                            IMasterConnection_sendASDU(connection, asdu);
-
-                                            sendResponse = false;
-                                        }
-                                        else {
-                                            Iec104Utility::log_debug("%s command (%s) for %i:%i - Valid timestamp -> accept",
-                                                                    beforeLog.c_str(),
-                                                                    IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa);//LCOV_EXCL_LINE
-                                        }
-                                    }
-                                }
-                                else {
-                                    if (!self->m_config->AllowCmdWithoutTime()) {
-                                        Iec104Utility::log_warn(
-                                            "%s command (%s) for %i:%i - Commands without timestamp are not allowed",
-                                            beforeLog.c_str(), IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa); //LCOV_EXCL_LINE
-                                        acceptCommand = false;
-                                    }
-                                }
-
-                                if (acceptCommand) {
-                                    CS101_ASDU_setCOT(asdu, CS101_COT_ACTIVATION_CON);
-
-                                    if (!self->forwardCommand(asdu, io, connection)) {
-                                        CS101_ASDU_setNegative(asdu, true);
-                                        Iec104Utility::log_warn(
-                                            "%s command (%s) for %i:%i - Failed to forward command, set negative response",
-                                            beforeLog.c_str(), IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa); //LCOV_EXCL_LINE
-                                    }
-                                    else {
-                                        /* send ACT-CON later when south side feedback is received */
-                                        sendResponse = false;
-                                    }
-                                }
-                                else {
-                                    Iec104Utility::log_warn("%s command (%s) for %i:%i - Command not accepted", beforeLog.c_str(),
-                                                            IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa); //LCOV_EXCL_LINE
-                                    CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_TYPE_ID);
-                                }
-                            }
-                            else {
-                                Iec104Utility::log_warn("%s command (%s) for %i:%i - Unknown command type %d", beforeLog.c_str(),
-                                                        IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa, typeId); //LCOV_EXCL_LINE
-                                CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_TYPE_ID);
-                            }
-                        }
-                        else {
-                            Iec104Utility::log_warn("%s command (%s) for %i:%i - Unknown IOA", beforeLog.c_str(),
-                                                    IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa); //LCOV_EXCL_LINE
-                            CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_IOA);
-                        }
-                    }
-                    else {
-                        Iec104Utility::log_warn("%s command (%s) for %i - Originator address %i not allowed", beforeLog.c_str(),
-                                                IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, oa); //LCOV_EXCL_LINE
-                    }
-                }
-                else {
-                    Iec104Utility::log_warn("%s command (%s) - Unknown CA: %i", beforeLog.c_str(),
-                                            IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca); //LCOV_EXCL_LINE
-                    CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_CA);
-                }
-
-                InformationObject_destroy(io);
-            }
-            else {
-                Iec104Utility::log_warn("%s command (%s) - Unknown type or information object missing", beforeLog.c_str(),
-                                        IEC104DataPoint::getStringFromTypeID(typeId).c_str()); //LCOV_EXCL_LINE
-                CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_TYPE_ID);
-            }
-        }
-        else {
-            CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_COT);
-            Iec104Utility::log_warn("%s command (%s) - Unexpected COT: %d", beforeLog.c_str(),
-                                    IEC104DataPoint::getStringFromTypeID(typeId).c_str(), cot);//LCOV_EXCL_LINE
-        }
-
-        if (sendResponse)
-        {
-            Iec104Utility::log_debug("%s command (%s) - Sending response", beforeLog.c_str(),
-                                    IEC104DataPoint::getStringFromTypeID(typeId).c_str());//LCOV_EXCL_LINE
-            IMasterConnection_sendASDU(connection, asdu);
-        }
-
-        return true;
-    }
-    else {
-        Iec104Utility::log_warn("%s command (%s) - unsupported command type: %d", beforeLog.c_str(),
+    if (!isSupportedCommandType(typeId)) {
+        Iec104Utility::log_warn("%s command (%s) - unsupported command type: %d -> ignore", beforeLog.c_str(),
                                 IEC104DataPoint::getStringFromTypeID(typeId).c_str(), typeId);//LCOV_EXCL_LINE
+        return false;
     }
 
-    return false;
+    Iec104Utility::log_info("%s Received command of type %s", beforeLog.c_str(),
+                            IEC104DataPoint::getStringFromTypeID(typeId).c_str());//LCOV_EXCL_LINE
+
+    bool sendResponse = self->validateCommand(connection, asdu);
+    if (sendResponse) {
+        Iec104Utility::log_debug("%s command (%s) - Sending response", beforeLog.c_str(),
+                                IEC104DataPoint::getStringFromTypeID(typeId).c_str());//LCOV_EXCL_LINE
+        IMasterConnection_sendASDU(connection, asdu);
+    }
+
+    return true;
 }
 
 /**
