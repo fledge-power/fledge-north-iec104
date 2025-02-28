@@ -1359,8 +1359,7 @@ IEC104Server::validateCommand(IMasterConnection connection, CS101_ASDU asdu) {
             if (!checkIfCmdTimeIsValid(typeId, io)) {
                 Iec104Utility::log_warn("%s command (%s) for %i:%i - Invalid timestamp -> ignore", beforeLog.c_str(),
                                         IEC104DataPoint::getStringFromTypeID(typeId).c_str(), ca, ioa);//LCOV_EXCL_LINE
-                acceptCommand = false;
-
+                                        
                 /* send negative response -> according to IEC 60870-5-104 the command should be silently ignored instead! */
                 CS101_ASDU_setCOT(asdu, CS101_COT_ACTIVATION_CON);
                 CS101_ASDU_setNegative(asdu, true);
