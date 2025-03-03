@@ -365,6 +365,20 @@ IEC104Server::sendInitialAudits()
 }
 
 bool
+IEC104Server::isAnyConnectionEstablished() {
+    auto allRedGroups = Config()->RedundancyGroups();
+    for (auto redGroup : allRedGroups) {
+        auto redGroupConnections = redGroup->Connections();
+        for (auto redGroupConnection : redGroupConnections) {
+            if(!redGroupConnection->Port().empty()){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool
 IEC104Server::startSlave(){
     std::string beforeLog = Iec104Utility::PluginName + " - IEC104Server::startSlave -";
     if (!m_slave) {
@@ -2187,7 +2201,8 @@ IEC104Server::connectionEventHandler(void* parameter,
         self->removeOutstandingCommands(con);
 
         // If another connection is available to become active, the switch is made before this connection is closed
-        if(currentConnection->isActive()){
+        // If no connection remain, send global disconnect audit
+        if(!self->isAnyConnectionEstablished()){
             self->sendGlobalStatusAudit("disconnected");
         }
     }
