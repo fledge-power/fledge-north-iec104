@@ -175,6 +175,13 @@ private:
      */
     void sendInitialAudits();
 
+    /**
+     * @brief Verify if any conection from any of any of the configured redundancy groups is connected
+     * @return true if one of the defined connection is established, else false
+     */
+    bool isAnyConnectionEstablished();
+
+
     CS104_Slave m_slave{};
     TLSConfiguration m_tlsConfig = nullptr;
     CS101_AppLayerParameters alParams = nullptr;
