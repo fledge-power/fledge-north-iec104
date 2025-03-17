@@ -8,6 +8,7 @@
 
 #include "iec104_config.hpp"
 #include "iec104_utility.hpp"
+#include "iec104_redgroup.hpp"
 
 using namespace rapidjson;
 
@@ -71,141 +72,86 @@ IEC104Config::isValidIPAddress(const std::string& addrStr)
 }
 
 void
-IEC104Config::importProtocolConfig(const std::string& protocolConfig)
+IEC104Config::importRedundancyGroupConnections(const Value& connection, std::shared_ptr<IEC104ServerRedGroup> redundancyGroup) const
 {
-    std::string beforeLog = Iec104Utility::PluginName + " - IEC104Config::importProtocolConfig -";
-    m_protocolConfigComplete = false;
+    std::string beforeLog = Iec104Utility::PluginName + " - IEC104Config::importRedundancyGroupConnections -";
 
-    Document document;
-
-    if (document.Parse(const_cast<char*>(protocolConfig.c_str())).HasParseError()) {
-        Iec104Utility::log_fatal("%s Parsing error in protocol_stack json, offset %u: %s", beforeLog.c_str(),
-                                    static_cast<unsigned>(document.GetErrorOffset()), GetParseError_En(document.GetParseError()));
+    if(!connection.IsObject()) {
+        Iec104Utility::log_error("%s  connections element is not an object -> ignore", beforeLog.c_str());
         return;
     }
 
-    if (!document.IsObject()) {
-        Iec104Utility::log_fatal("%s Root is not an object", beforeLog.c_str());
+    if (!connection.HasMember("clt_ip") || !connection["clt_ip"].IsString()) {
+        Iec104Utility::log_error("%s  clt_ip does not exist or is not a string -> ignore", beforeLog.c_str());
+        return;
+    }
+    std::string cltIp = connection["clt_ip"].GetString();
+
+    if (!isValidIPAddress(cltIp)) {
+        Iec104Utility::log_error("%s  %s is not a valid IP address -> ignore", beforeLog.c_str(), cltIp.c_str());
         return;
     }
 
-    if (!document.HasMember("protocol_stack") || !document["protocol_stack"].IsObject()) {
-        Iec104Utility::log_fatal("%s protocol_stack does not exist or is not an object", beforeLog.c_str());
-        return;
-    }
+    Iec104Utility::log_debug("%s  add to group: %s", beforeLog.c_str(), cltIp.c_str());
+    CS104_RedundancyGroup_addAllowedClient(redundancyGroup->CS104RedGroup(), cltIp.c_str());
+    auto redundancyGroupConnection = std::make_shared<RedGroupCon>(cltIp);
+    redundancyGroup->AddConnection(redundancyGroupConnection);
+}
 
-    const Value& protocolStack = document["protocol_stack"];
+void
+IEC104Config::importRedundancyGroups(const Value& redundancyGroups)
+{
+    std::string beforeLog = Iec104Utility::PluginName + " - IEC104Config::importRedundancyGroups -";
 
-    if (!protocolStack.HasMember("transport_layer") || !protocolStack["transport_layer"].IsObject()) {
-        Iec104Utility::log_fatal("%s transport_layer does not exist or is not an object", beforeLog.c_str());
-        return;
-    }
+    for (const Value& redGroup : redundancyGroups.GetArray()) {           
+        if (!redGroup.IsObject()) {
+            Iec104Utility::log_error("%s redundancy_groups element is not an object -> ignore", beforeLog.c_str());
+            continue;
+        }
+        
+        char* redGroupName = nullptr;
 
-    if (!protocolStack.HasMember("application_layer") || !protocolStack["application_layer"].IsObject()) {
-        Iec104Utility::log_fatal("%s application_layer does not exist or is not an object", beforeLog.c_str());
-        return;
-    }
+        if (redGroup.HasMember("rg_name")) {
+            if (redGroup["rg_name"].IsString()) {
+                std::string rgName = redGroup["rg_name"].GetString();
 
-    const Value& transportLayer = protocolStack["transport_layer"];
-    const Value& applicationLayer = protocolStack["application_layer"];
+                redGroupName = strdup(rgName.c_str());
+            }
+        }
+        if (redGroupName == nullptr) {
+            Iec104Utility::log_error("%s rg_name does not exist or is not a string -> ignore", beforeLog.c_str());
+            continue;
+        }
 
-    if (protocolStack.HasMember("south_monitoring")) {
-        const Value& southMonitoring = protocolStack["south_monitoring"];
+        CS104_RedundancyGroup cs104RedGroup = CS104_RedundancyGroup_create(redGroupName);
+        auto redundancyGroup = std::make_shared<IEC104ServerRedGroup>(redGroupName, static_cast<int>(m_redundancyGroups.size()), cs104RedGroup);
+        Iec104Utility::log_debug("%s Adding red group with name: %s", beforeLog.c_str(), redGroupName);
 
-        if (southMonitoring.IsArray()) {
-            for (const Value& southMonInst : southMonitoring.GetArray()) {
+        free(redGroupName);
 
-                if (!southMonInst.IsObject()) {
-                    Iec104Utility::log_error("%s south_monitoring element is not an object", beforeLog.c_str());
-                    continue;
-                }
-                if (southMonInst.HasMember("asset")) {
-                    if (southMonInst["asset"].IsString()) {
-                        std::string assetName = southMonInst["asset"].GetString();
-
-                        SouthPluginMonitor* monitor = new SouthPluginMonitor(assetName);
-
-                        m_monitoredSouthPlugins.push_back(monitor);
-                    }
-                    else {
-                        Iec104Utility::log_error("%s south_monitoring \"asset\" element is not a string", beforeLog.c_str());
-                    }
-                }
-                else {
-                    Iec104Utility::log_error("%s south_monitoring is missing \"asset\" element", beforeLog.c_str());
-                }
+        if (redGroup.HasMember("connections") && redGroup["connections"].IsArray()) {
+            for (const Value& connection : redGroup["connections"].GetArray()) {
+                importRedundancyGroupConnections(connection, redundancyGroup);
             }
         }
         else {
-            Iec104Utility::log_error("%s south_monitoring is not an array", beforeLog.c_str());
+            Iec104Utility::log_debug("%s  connections does not exist or is not an array -> adding fallback group", beforeLog.c_str());
         }
+
+        m_redundancyGroups.push_back(redundancyGroup);
     }
+}
+
+void
+IEC104Config::importTransportLayer(const Value& transportLayer)
+{
+    std::string beforeLog = Iec104Utility::PluginName + " - IEC104Config::importTransportLayer -";
 
     if (transportLayer.HasMember("redundancy_groups")) {
 
         if (transportLayer["redundancy_groups"].IsArray()) {
-
             const Value& redundancyGroups = transportLayer["redundancy_groups"];
-
-            for (const Value& redGroup : redundancyGroups.GetArray()) {
-                
-                if (!redGroup.IsObject()) {
-                    Iec104Utility::log_error("%s redundancy_groups element is not an object -> ignore", beforeLog.c_str());
-                    continue;
-                }
-                
-                char* redGroupName = nullptr;
-
-                if (redGroup.HasMember("rg_name")) {
-                    if (redGroup["rg_name"].IsString()) {
-                        std::string rgName = redGroup["rg_name"].GetString();
-
-                        redGroupName = strdup(rgName.c_str());
-                    }
-                }
-                if (redGroupName == nullptr) {
-                    Iec104Utility::log_error("%s rg_name does not exist or is not a string -> ignore", beforeLog.c_str());
-                    continue;
-                }
-
-                CS104_RedundancyGroup redundancyGroup = CS104_RedundancyGroup_create(redGroupName);
-                
-                Iec104Utility::log_debug("%s Adding red group with name: %s", beforeLog.c_str(), redGroupName);
-
-                free(redGroupName);
-
-                if (redGroup.HasMember("connections") && redGroup["connections"].IsArray()) {
-                    for (const Value& con : redGroup["connections"].GetArray()) {
-                        if(!con.IsObject()) {
-                            Iec104Utility::log_error("%s  connections element is not an object -> ignore", beforeLog.c_str());
-                            continue;
-                        }
-                        if (con.HasMember("clt_ip") && con["clt_ip"].IsString()) {
-                            std::string cltIp = con["clt_ip"].GetString();
-
-                            if (isValidIPAddress(cltIp)) {
-                                CS104_RedundancyGroup_addAllowedClient(redundancyGroup, cltIp.c_str());
-                                Iec104Utility::log_debug("%s  add to group: %s", beforeLog.c_str(), cltIp.c_str());
-                            }
-                            else {
-                                Iec104Utility::log_error("%s  %s is not a valid IP address -> ignore", beforeLog.c_str(),
-                                                        cltIp.c_str());
-                            }
-                        }
-                        else {
-                            Iec104Utility::log_error("%s  clt_ip does not exist or is not a string -> ignore",
-                                                    beforeLog.c_str());
-                            continue;
-                        }
-                    }
-                }
-                else {
-                    Iec104Utility::log_debug("%s  connections does not exist or is not an array -> adding fallback group",
-                                            beforeLog.c_str());
-                }
-
-                m_configuredRedundancyGroups.push_back(redundancyGroup);
-            }
+            importRedundancyGroups(redundancyGroups);
         }
         else {
             Iec104Utility::log_fatal("%s redundancy_groups is not an array -> ignore redundancy groups", beforeLog.c_str());
@@ -377,6 +323,12 @@ IEC104Config::importProtocolConfig(const std::string& protocolConfig)
             }
         }
     }
+}
+
+void
+IEC104Config::importApplicationLayer(const Value& applicationLayer)
+{
+    std::string beforeLog = Iec104Utility::PluginName + " - IEC104Config::importApplicationLayer -";
 
     if (applicationLayer.HasMember("ca_asdu_size")) {
         if (applicationLayer["ca_asdu_size"].IsInt()) {
@@ -551,6 +503,81 @@ IEC104Config::importProtocolConfig(const std::string& protocolConfig)
         else {
             Iec104Utility::log_warn("%s application_layer.cmd_dest is not a string -> broadcast commands", beforeLog.c_str());
         }   
+    }
+}
+
+void
+IEC104Config::importProtocolConfig(const std::string& protocolConfig)
+{
+    std::string beforeLog = Iec104Utility::PluginName + " - IEC104Config::importProtocolConfig -";
+    m_protocolConfigComplete = false;
+
+    Document document;
+
+    if (document.Parse(const_cast<char*>(protocolConfig.c_str())).HasParseError()) {
+        Iec104Utility::log_fatal("%s Parsing error in protocol_stack json, offset %u: %s", beforeLog.c_str(),
+                                    static_cast<unsigned>(document.GetErrorOffset()), GetParseError_En(document.GetParseError()));
+        return;
+    }
+
+    if (!document.IsObject()) {
+        Iec104Utility::log_fatal("%s Root is not an object", beforeLog.c_str());
+        return;
+    }
+
+    if (!document.HasMember("protocol_stack") || !document["protocol_stack"].IsObject()) {
+        Iec104Utility::log_fatal("%s protocol_stack does not exist or is not an object", beforeLog.c_str());
+        return;
+    }
+
+    const Value& protocolStack = document["protocol_stack"];
+
+    if (!protocolStack.HasMember("transport_layer") || !protocolStack["transport_layer"].IsObject()) {
+        Iec104Utility::log_fatal("%s transport_layer does not exist or is not an object", beforeLog.c_str());
+        return;
+    }
+
+    if (!protocolStack.HasMember("application_layer") || !protocolStack["application_layer"].IsObject()) {
+        Iec104Utility::log_fatal("%s application_layer does not exist or is not an object", beforeLog.c_str());
+        return;
+    }
+
+    const Value& transportLayer = protocolStack["transport_layer"];
+    const Value& applicationLayer = protocolStack["application_layer"];
+
+    importTransportLayer(transportLayer);
+    importApplicationLayer(applicationLayer);
+
+    if (protocolStack.HasMember("south_monitoring")) {
+        const Value& southMonitoring = protocolStack["south_monitoring"];
+
+        if (southMonitoring.IsArray()) {
+            for (const Value& southMonInst : southMonitoring.GetArray()) {
+
+                if (!southMonInst.IsObject()) {
+                    Iec104Utility::log_error("%s south_monitoring element is not an object", beforeLog.c_str());
+                    continue;
+                }
+                if (southMonInst.HasMember("asset")) {
+                    if (southMonInst["asset"].IsString()) {
+                        std::string assetName = southMonInst["asset"].GetString();
+
+                        SouthPluginMonitor* monitor = new SouthPluginMonitor(assetName);
+
+                        m_monitoredSouthPlugins.push_back(monitor);
+                    }
+                    else {
+                        Iec104Utility::log_error("%s south_monitoring \"asset\" element is not a string", beforeLog.c_str());
+                    }
+                }
+                else {
+                    Iec104Utility::log_error("%s south_monitoring is missing \"asset\" element", beforeLog.c_str());
+                }
+            }
+        }
+        else {
+            Iec104Utility::log_error("%s south_monitoring is not an array", beforeLog.c_str());
+        }
     }
 
     m_protocolConfigComplete = true;
@@ -892,4 +919,21 @@ bool IEC104Config::AllowCmdWithoutTime()
     else {
         return false;
     }
+}
+
+std::shared_ptr<IEC104ServerRedGroup> IEC104Config::GetRedundancyGroup(const std::string& ip)
+{
+    std::shared_ptr<IEC104ServerRedGroup> currentRedGroup = nullptr;
+    auto redGroupIt = std::find_if(m_redundancyGroups.begin(), m_redundancyGroups.end(), [&ip](const std::shared_ptr<IEC104ServerRedGroup>& redGroup) {
+        auto redGroupCons = redGroup->Connections();
+        return std::any_of(redGroupCons.begin(), redGroupCons.end(), [&ip](const std::shared_ptr<RedGroupCon>& redGroupCon) {
+            return redGroupCon->ClientIP() == ip;
+        });
+    });
+
+    if (redGroupIt != m_redundancyGroups.end()) {
+        currentRedGroup = *redGroupIt;
+    }
+
+    return currentRedGroup;
 }

@@ -86,6 +86,156 @@ static string protocol_stack = QUOTE({
         }
     });
 
+static string protocol_stack_2 = QUOTE({
+        "protocol_stack" : {
+            "name" : "iec104server",
+            "version" : "1.0",
+            "transport_layer" : {
+                "redundancy_groups":[
+                    {
+                       "connections":[
+                          {
+                             "clt_ip":"192.168.2.244"
+                          },
+                          {
+                             "clt_ip":"192.168.0.11"
+                          }
+                       ],
+                       "rg_name":"red-group-1"
+                    },
+                    {
+                       "connections":[
+                          {
+                             "clt_ip":"192.168.2.224"
+                          },
+                          {
+                             "clt_ip":"192.168.0.11"
+                          },
+                          {
+                             "clt_ip":"192.168.0.12"
+                          }
+                       ],
+                       "rg_name":"red-group-2"
+                    },
+                    {
+                        "rg_name":"catch-all"
+                    }
+                ],
+                "bind_on_ip":false,
+                "srv_ip":"0.0.0.0",
+                "port":2404,
+                "tls":false,
+                "k_value":12,
+                "w_value":8,
+                "t0_timeout":10,
+                "t1_timeout":15,
+                "t2_timeout":10,
+                "t3_timeout":20,
+                "mode": "accept_always"
+            },
+            "application_layer" : {
+                "ca_asdu_size":2,
+                "ioaddr_size":3,
+                "asdu_size":0,
+                "time_sync":false,
+                "cmd_exec_timeout":1,
+                "cmd_recv_timeout":1,
+                "accept_cmd_with_time":0,
+                "filter_orig":false,
+                "filter_list":[
+                    {
+                       "orig_addr":0
+                    },
+                    {
+                       "orig_addr":1
+                    },
+                    {
+                       "orig_addr":2
+                    }
+                ]
+            },
+            "south_monitoring": [
+                {"asset": "CONSTAT-1"},
+                {"asset": "CONSTAT-2"}
+            ]
+        }
+    });
+
+static string protocol_stack_3 = QUOTE({
+        "protocol_stack" : {
+            "name" : "iec104server",
+            "version" : "1.0",
+            "transport_layer" : {
+                "redundancy_groups":[
+                    {
+                       "connections":[
+                          {
+                             "clt_ip":"192.168.2.244"
+                          },
+                          {
+                             "clt_ip":"192.168.0.11"
+                          }
+                       ],
+                       "rg_name":"red-group-1"
+                    },
+                    {
+                       "connections":[
+                          {
+                             "clt_ip":"192.168.2.224"
+                          },
+                          {
+                             "clt_ip":"192.168.0.11"
+                          },
+                          {
+                             "clt_ip":"192.168.0.12"
+                          }
+                       ],
+                       "rg_name":"red-group-2"
+                    },
+                    {
+                        "rg_name":"catch-all"
+                    }
+                ],
+                "bind_on_ip":false,
+                "srv_ip":"0.0.0.0",
+                "port":2404,
+                "tls":false,
+                "k_value":12,
+                "w_value":8,
+                "t0_timeout":10,
+                "t1_timeout":15,
+                "t2_timeout":10,
+                "t3_timeout":20,
+                "mode": "accept_always"
+            },
+            "application_layer" : {
+                "ca_asdu_size":2,
+                "ioaddr_size":3,
+                "asdu_size":0,
+                "time_sync":false,
+                "cmd_exec_timeout":1,
+                "cmd_recv_timeout":1,
+                "accept_cmd_with_time":1,
+                "filter_orig":false,
+                "filter_list":[
+                    {
+                       "orig_addr":0
+                    },
+                    {
+                       "orig_addr":1
+                    },
+                    {
+                       "orig_addr":2
+                    }
+                ]
+            },
+            "south_monitoring": [
+                {"asset": "CONSTAT-1"},
+                {"asset": "CONSTAT-2"}
+            ]
+        }
+    });
+
 static string tls = QUOTE({
         "tls_conf" : {
             "private_key" : "iec104_server.key",
@@ -349,7 +499,8 @@ protected:
         requestSouthStatusCalled = 0;
         asduHandlerCalled = 0;
         actConReceived = 0;
-        actConNegative = false;
+        lastCOTReceived = 0;
+        isNegative = false;
         actTermReceived = 0;
 
         // Init iec104server object
@@ -358,6 +509,7 @@ protected:
         uint16_t port = IEC_60870_5_104_DEFAULT_PORT;
         // Create connection
         connection = CS104_Connection_create(ip, port);
+        ASSERT_NE(connection, nullptr);
 
         CS104_Connection_setASDUReceivedHandler(connection, m_asduReceivedHandler, this);
     }
@@ -369,11 +521,13 @@ protected:
     static int operateHandlerSingleCommand(char *operation, int paramCount, char* names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerReceiveSetpointCommandShortWithTimestamp(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerReceiveSetpointCommandShortWithInvalidTimestamp(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
+    static int operateHandlerSinglePointCommandUnknownCOT(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerSinglePointCommandUnknownCA(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
+    static int operateHandlerSinglePointCommandOriginatorNotAllowed(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerReceiveUnexpectedDoublePointCommand(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerCommandAckTimeout(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerCommandActCon(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
-    static int operateHandlerCommandActConNegative(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
+    static int operateHandlerCommandisNegative(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerSinglePointCommandIOMissing(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerReceiveSinglePointCommandWithTime(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerDoublePointCommand(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
@@ -398,9 +552,12 @@ protected:
 
     void ForwardCommandAck(const char* cmdName, const char* type, int ca, int ioa, int cot, bool negative);
 
+    void SendSouthEvent(std::string asset, bool withConnx, std::string connxValue, bool withGiStatus, std::string giStatusValue);
+
     int asduHandlerCalled = 0;
     int actConReceived = 0;
-    bool actConNegative = false;
+    int lastCOTReceived = 0;
+    bool isNegative = false;
     int actTermReceived = 0;
 
     static bool m_asduReceivedHandler(void* parameter, int address, CS101_ASDU asdu);
@@ -417,11 +574,13 @@ ControlTest::m_asduReceivedHandler(void* parameter, int address, CS101_ASDU asdu
     printf("CS101_ASDU: type: %s (%d) ca: %i cot: %i\n", IEC104DataPoint::getStringFromTypeID(typeId).c_str(), typeId,
             CS101_ASDU_getCA(asdu), CS101_ASDU_getCOT(asdu));
     
-    self->actConNegative = false;
+    self->isNegative = false;
 
-    if (CS101_ASDU_getCOT(asdu) == CS101_COT_ACTIVATION_CON) {
+    auto cot = CS101_ASDU_getCOT(asdu);
+    self->lastCOTReceived = cot;
+    self->isNegative = CS101_ASDU_isNegative(asdu);
+    if (cot == CS101_COT_ACTIVATION_CON) {
         self->actConReceived++;
-        self->actConNegative = CS101_ASDU_isNegative(asdu);
     }
 
     if (CS101_ASDU_getCOT(asdu) == CS101_COT_ACTIVATION_TERMINATION) {
@@ -544,7 +703,47 @@ int ControlTest::operateHandlerReceiveSetpointCommandShortWithInvalidTimestamp(c
     return 1;
 }
 
+int ControlTest::operateHandlerSinglePointCommandUnknownCOT(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...)
+{
+    printf("%s\n",operation);
+    EXPECT_EQ(operation,"request_connection_status");
+    if(!strcmp(operation, "IEC104Command")) {
+        for(int i = 0; i < paramCount; i++) {
+            printf("PARAM: %s: %s\n", names[i], parameters[i]);
+        }
+
+    }
+    if (!strcmp(operation, "request_connection_status")) {
+        requestSouthStatusCalled++;
+    }
+    else {
+        operateHandlerCalled++;
+    }
+
+    return 1;
+}
+
 int ControlTest::operateHandlerSinglePointCommandUnknownCA(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...)
+{
+    printf("%s\n",operation);
+    EXPECT_EQ(operation,"request_connection_status");
+    if(!strcmp(operation, "IEC104Command")) {
+        for(int i = 0; i < paramCount; i++) {
+            printf("PARAM: %s: %s\n", names[i], parameters[i]);
+        }
+
+    }
+    if (!strcmp(operation, "request_connection_status")) {
+        requestSouthStatusCalled++;
+    }
+    else {
+        operateHandlerCalled++;
+    }
+
+    return 1;
+}
+
+int ControlTest::operateHandlerSinglePointCommandOriginatorNotAllowed(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...)
 {
     printf("%s\n",operation);
     EXPECT_EQ(operation,"request_connection_status");
@@ -662,7 +861,7 @@ int ControlTest::operateHandlerCommandActCon(char *operation, int paramCount, ch
     return 1;
 }
 
-int ControlTest::operateHandlerCommandActConNegative(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...)
+int ControlTest::operateHandlerCommandisNegative(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...)
 {
     printf("%s\n",operation);
     if(!strcmp(operation, "IEC104Command")) {
@@ -1221,10 +1420,49 @@ ControlTest::ForwardCommandAck(const char* cmdName, const char* type, int ca, in
     delete dataobjects;
 }
 
+static Datapoint*
+createSouthEvent(bool withConnx, std::string connxValue, bool withGiStatus, std::string giStatusValue)
+{
+    auto* datapoints = new vector<Datapoint*>;
+
+    if (withConnx) {
+        datapoints->push_back(createDatapoint("connx_status", connxValue));
+    }
+
+    if (withGiStatus) {
+        datapoints->push_back(createDatapoint("gi_status", giStatusValue));
+    }
+
+    DatapointValue dpv(datapoints, true);
+
+    Datapoint* dp = new Datapoint("south_event", dpv);
+
+    return dp;
+}
+
+void
+ControlTest::SendSouthEvent(std::string asset, bool withConnx, std::string connxValue, bool withGiStatus, std::string giStatusValue)
+{
+    Datapoint* southEvent = createSouthEvent(true, connxValue, withGiStatus, giStatusValue);
+
+    auto* southEvents = new vector<Datapoint*>;
+
+    southEvents->push_back(southEvent);
+
+    //TODO send south event connx_started
+    Reading* reading = new Reading(asset, *southEvents);
+
+    vector<Reading*> readings;
+
+    readings.push_back(reading);
+
+    iec104Server->send(readings);
+}
+
 TEST_F(ControlTest, CreateReading)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     auto* dataobjects = new vector<Datapoint*>;
 
@@ -1247,7 +1485,9 @@ TEST_F(ControlTest, CreateReading)
 TEST_F(ControlTest, ReceiveSinglePointCommand)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerSingleCommand);
 
@@ -1266,12 +1506,15 @@ TEST_F(ControlTest, ReceiveSinglePointCommand)
     Thread_sleep(500);
 
     ASSERT_EQ(1, operateHandlerCalled);
+    ASSERT_EQ(0, asduHandlerCalled);
 }
 
 TEST_F(ControlTest, ReceiveSetpointCommandShortWithTimestamp)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data_2, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerReceiveSetpointCommandShortWithTimestamp);
 
@@ -1297,12 +1540,15 @@ TEST_F(ControlTest, ReceiveSetpointCommandShortWithTimestamp)
     Thread_sleep(1500);
 
     ASSERT_EQ(1, operateHandlerCalled);
+    ASSERT_EQ(0, asduHandlerCalled);
 }
 
 TEST_F(ControlTest, ReceiveSetpointCommandShortWithInvalidTimestamp)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data_2, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerReceiveSetpointCommandShortWithInvalidTimestamp);
 
@@ -1333,15 +1579,77 @@ TEST_F(ControlTest, ReceiveSetpointCommandShortWithInvalidTimestamp)
     /* expect negative ACT-CON */
     ASSERT_EQ(1, asduHandlerCalled);
     ASSERT_EQ(1, actConReceived);
-    ASSERT_TRUE(actConNegative);
+    ASSERT_TRUE(isNegative);
 }
 
+TEST_F(ControlTest, SinglePointCommandSouthNotConnected)
+{
+    iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Do not open connecion with south plugin
+    //SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
+    iec104Server->registerControl(operateHandlerSingleCommand);
+
+    Thread_sleep(500); /* wait for the server to start */
+
+    ASSERT_TRUE(CS104_Connection_connect(connection));
+
+    CS104_Connection_sendStartDT(connection);
+
+    InformationObject sc = (InformationObject)SingleCommand_create(NULL, 23005, true, false, 0);
+
+    CS104_Connection_sendProcessCommandEx(connection, CS101_COT_ACTIVATION, 45, sc);
+
+    InformationObject_destroy(sc);
+
+    Thread_sleep(500);
+
+    ASSERT_EQ(0, operateHandlerCalled);
+
+    /* expect negative ACT-CON */
+    ASSERT_EQ(1, asduHandlerCalled);
+    ASSERT_EQ(1, actConReceived);
+    ASSERT_TRUE(isNegative);
+}
+
+TEST_F(ControlTest, SinglePointCommandUnknownCOT)
+{
+    iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
+
+    iec104Server->registerControl(operateHandlerSinglePointCommandUnknownCOT);
+
+    Thread_sleep(500); /* wait for the server to start */
+
+    ASSERT_TRUE(CS104_Connection_connect(connection));
+
+    CS104_Connection_sendStartDT(connection);
+
+    InformationObject sc = (InformationObject)SingleCommand_create(NULL, 23005, true, false, 0);
+
+    CS104_Connection_sendProcessCommandEx(connection, CS101_COT_ACTIVATION_CON, 45, sc);
+
+    InformationObject_destroy(sc);
+
+    Thread_sleep(500);
+
+    ASSERT_EQ(0, operateHandlerCalled);
+
+    /* expect negative ACT-CON */
+    ASSERT_EQ(1, asduHandlerCalled);
+    ASSERT_EQ(lastCOTReceived, CS101_COT_UNKNOWN_COT);
+    ASSERT_TRUE(isNegative);
+}
 
 TEST_F(ControlTest, SinglePointCommandUnknownCA)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerSinglePointCommandUnknownCA);
 
@@ -1360,12 +1668,53 @@ TEST_F(ControlTest, SinglePointCommandUnknownCA)
     Thread_sleep(500);
 
     ASSERT_EQ(0, operateHandlerCalled);
+
+    /* expect negative ACT-CON */
+    ASSERT_EQ(1, asduHandlerCalled);
+    ASSERT_EQ(lastCOTReceived, CS101_COT_UNKNOWN_CA);
+    ASSERT_TRUE(isNegative);
+}
+
+TEST_F(ControlTest, SinglePointCommandOriginatorNotAllowed)
+{
+    iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
+
+    iec104Server->registerControl(operateHandlerSinglePointCommandOriginatorNotAllowed);
+
+    Thread_sleep(500); /* wait for the server to start */
+
+    CS101_AppLayerParameters alParams = CS104_Connection_getAppLayerParameters(connection);
+    alParams->originatorAddress = 3; // Only 0, 1 and 2 are allowed
+    CS104_Connection_setAppLayerParameters(connection, alParams);
+    ASSERT_TRUE(CS104_Connection_connect(connection));
+    
+    CS104_Connection_sendStartDT(connection);
+
+    InformationObject sc = (InformationObject)SingleCommand_create(NULL, 23005, true, false, 0);
+
+    CS104_Connection_sendProcessCommandEx(connection, CS101_COT_ACTIVATION, 45, sc);
+
+    InformationObject_destroy(sc);
+
+    Thread_sleep(500);
+
+    ASSERT_EQ(0, operateHandlerCalled);
+
+    /* expect negative ACT-CON */
+    ASSERT_EQ(1, asduHandlerCalled);
+    ASSERT_EQ(1, actConReceived);
+    ASSERT_TRUE(isNegative);
 }
 
 TEST_F(ControlTest, ReceiveUnexpectedDoublePointCommand)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerReceiveUnexpectedDoublePointCommand);
 
@@ -1384,12 +1733,19 @@ TEST_F(ControlTest, ReceiveUnexpectedDoublePointCommand)
     Thread_sleep(500);
 
     ASSERT_EQ(0, operateHandlerCalled);
+
+    /* expect negative ACT-CON */
+    ASSERT_EQ(1, asduHandlerCalled);
+    ASSERT_EQ(lastCOTReceived, CS101_COT_UNKNOWN_TYPE_ID);
+    ASSERT_TRUE(isNegative);
 }
 
 TEST_F(ControlTest, CommandAckTimeout)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerCommandAckTimeout);
 
@@ -1411,12 +1767,15 @@ TEST_F(ControlTest, CommandAckTimeout)
     Thread_sleep(1000);
 
     ASSERT_EQ(1, operateHandlerCalled);
+    ASSERT_EQ(0, asduHandlerCalled);
 }
 
 TEST_F(ControlTest, CommandActCon)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerCommandActCon);
 
@@ -1451,16 +1810,18 @@ TEST_F(ControlTest, CommandActCon)
 
     ASSERT_EQ(2, asduHandlerCalled);
     ASSERT_EQ(1, actConReceived);
-    ASSERT_FALSE(actConNegative);
+    ASSERT_FALSE(isNegative);
     ASSERT_EQ(1, actTermReceived);
 }
 
-TEST_F(ControlTest, CommandActConNegative)
+TEST_F(ControlTest, CommandisNegative)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
-    iec104Server->registerControl(operateHandlerCommandActConNegative);
+    iec104Server->registerControl(operateHandlerCommandisNegative);
 
     iec104Server->ActConTimeout(1000);
     iec104Server->ActTermTimeout(1000);
@@ -1488,14 +1849,16 @@ TEST_F(ControlTest, CommandActConNegative)
 
     ASSERT_EQ(1, asduHandlerCalled);
     ASSERT_EQ(1, actConReceived);
-    ASSERT_TRUE(actConNegative);
+    ASSERT_TRUE(isNegative);
     ASSERT_EQ(0, actTermReceived);
 }
 
 TEST_F(ControlTest, SinglePointCommandIOMissing)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerSinglePointCommandIOMissing);
 
@@ -1518,12 +1881,85 @@ TEST_F(ControlTest, SinglePointCommandIOMissing)
     Thread_sleep(500);
 
     ASSERT_EQ(0, operateHandlerCalled);
+
+    /* expect negative ACT-CON */
+    ASSERT_EQ(1, asduHandlerCalled);
+    ASSERT_EQ(lastCOTReceived, CS101_COT_UNKNOWN_TYPE_ID);
+    ASSERT_TRUE(isNegative);
+}
+
+TEST_F(ControlTest, ReceiveSinglePointCommandWithoutTimestampNotAllowed)
+{
+    iec104Server->setJsonConfig(protocol_stack_3, exchanged_data, tls);
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
+
+    iec104Server->registerControl(operateHandlerSingleCommand);
+
+    Thread_sleep(500); /* wait for the server to start */
+
+    ASSERT_TRUE(CS104_Connection_connect(connection));
+
+    CS104_Connection_sendStartDT(connection);
+
+    InformationObject sc = (InformationObject)SingleCommand_create(NULL, 23005, true, false, 0);
+
+    CS104_Connection_sendProcessCommandEx(connection, CS101_COT_ACTIVATION, 45, sc);
+
+    InformationObject_destroy(sc);
+
+    Thread_sleep(500);
+
+    ASSERT_EQ(0, operateHandlerCalled);
+
+    /* expect negative ACT-CON */
+    ASSERT_EQ(1, asduHandlerCalled);
+    ASSERT_EQ(lastCOTReceived, CS101_COT_UNKNOWN_TYPE_ID);
+    ASSERT_TRUE(isNegative);
+}
+
+TEST_F(ControlTest, ReceiveSinglePointCommandWithTimestampNotAllowed)
+{
+    iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls);
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
+
+    iec104Server->registerControl(operateHandlerReceiveSinglePointCommandWithTime);
+
+    Thread_sleep(500); /* wait for the server to start */
+
+    ASSERT_TRUE(CS104_Connection_connect(connection));
+
+    CS104_Connection_sendStartDT(connection);
+
+    CP56Time2a timestamp = CP56Time2a_createFromMsTimestamp(NULL, Hal_getTimeInMs());
+
+    InformationObject sc = (InformationObject)SingleCommandWithCP56Time2a_create(NULL, 10005, true, false, 0, timestamp);
+
+    CS104_Connection_sendProcessCommandEx(connection, CS101_COT_ACTIVATION, 45, sc);
+
+    InformationObject_destroy(sc);
+
+    free(timestamp);
+
+    Thread_sleep(500);
+
+    ASSERT_EQ(0, operateHandlerCalled);
+
+    /* expect negative ACT-CON */
+    ASSERT_EQ(1, asduHandlerCalled);
+    ASSERT_EQ(lastCOTReceived, CS101_COT_UNKNOWN_TYPE_ID);
+    ASSERT_TRUE(isNegative);
 }
 
 TEST_F(ControlTest, ReceiveSinglePointCommandWithTime)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerReceiveSinglePointCommandWithTime);
 
@@ -1544,6 +1980,7 @@ TEST_F(ControlTest, ReceiveSinglePointCommandWithTime)
     Thread_sleep(500);
 
     ASSERT_EQ(1, operateHandlerCalled);
+    ASSERT_EQ(0, asduHandlerCalled);
 
     /* wait for time to become to old for configured cmd_exec_timeout parameter */
     Thread_sleep(1200);
@@ -1556,7 +1993,13 @@ TEST_F(ControlTest, ReceiveSinglePointCommandWithTime)
 
     Thread_sleep(500);
 
+    /* no new command since first one as second one had invalid timestamp */
     ASSERT_EQ(1, operateHandlerCalled);
+    
+    /* expect negative ACT-CON */
+    ASSERT_EQ(1, asduHandlerCalled);
+    ASSERT_EQ(1, actConReceived);
+    ASSERT_TRUE(isNegative);
 
     free(timestamp);
 }
@@ -1564,7 +2007,9 @@ TEST_F(ControlTest, ReceiveSinglePointCommandWithTime)
 TEST_F(ControlTest, ReceiveDoublePointCommand)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerDoublePointCommand);
 
@@ -1583,12 +2028,15 @@ TEST_F(ControlTest, ReceiveDoublePointCommand)
     Thread_sleep(500);
 
     ASSERT_EQ(1, operateHandlerCalled);
+    ASSERT_EQ(0, asduHandlerCalled);
 }
 
 TEST_F(ControlTest, ReceiveDoublePointCommandWithTime)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerDoublePointCommandWithTime);
 
@@ -1609,6 +2057,7 @@ TEST_F(ControlTest, ReceiveDoublePointCommandWithTime)
     Thread_sleep(500);
 
     ASSERT_EQ(1, operateHandlerCalled);
+    ASSERT_EQ(0, asduHandlerCalled);
 
     /* wait for time to become to old for configured cmd_exec_timeout parameter */
     Thread_sleep(1200);
@@ -1621,7 +2070,13 @@ TEST_F(ControlTest, ReceiveDoublePointCommandWithTime)
 
     Thread_sleep(500);
 
+    /* no new command since first one as second one had invalid timestamp */
     ASSERT_EQ(1, operateHandlerCalled);
+    
+    /* expect negative ACT-CON */
+    ASSERT_EQ(1, asduHandlerCalled);
+    ASSERT_EQ(1, actConReceived);
+    ASSERT_TRUE(isNegative);
 
     free(timestamp);
 }
@@ -1630,7 +2085,9 @@ TEST_F(ControlTest, ReceiveDoublePointCommandWithTime)
 TEST_F(ControlTest, ReceiveMultipleSinglePointCommandWithTime)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerMultipleSinglePointCommandWithTime);
 
@@ -1663,6 +2120,7 @@ TEST_F(ControlTest, ReceiveMultipleSinglePointCommandWithTime)
     Thread_sleep(500);
 
     ASSERT_EQ(5, operateHandlerCalled);
+    ASSERT_EQ(0, asduHandlerCalled);
 
     /* wait for time to become to old for configured cmd_exec_timeout parameter */
     Thread_sleep(1200);
@@ -1687,7 +2145,13 @@ TEST_F(ControlTest, ReceiveMultipleSinglePointCommandWithTime)
 
     Thread_sleep(500);
 
+    /* no new command since first ones as second oned had invalid timestamp */
     ASSERT_EQ(5, operateHandlerCalled);
+    
+    /* expect negative ACT-CON */
+    ASSERT_EQ(5, asduHandlerCalled);
+    ASSERT_EQ(5, actConReceived);
+    ASSERT_TRUE(isNegative);
 
     free(timestamp);
 }
@@ -1695,7 +2159,9 @@ TEST_F(ControlTest, ReceiveMultipleSinglePointCommandWithTime)
 TEST_F(ControlTest, ReceiveStepPointCommand)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerStepPointCommand);
 
@@ -1714,13 +2180,16 @@ TEST_F(ControlTest, ReceiveStepPointCommand)
     Thread_sleep(500);
 
     ASSERT_EQ(1, operateHandlerCalled);
+    ASSERT_EQ(0, asduHandlerCalled);
 }
 
 
 TEST_F(ControlTest, ReceiveStepPointCommandWithTime)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerStepPointCommandWithTime);
 
@@ -1741,11 +2210,12 @@ TEST_F(ControlTest, ReceiveStepPointCommandWithTime)
     Thread_sleep(500);
 
     ASSERT_EQ(1, operateHandlerCalled);
+    ASSERT_EQ(0, asduHandlerCalled);
 
     /* wait for time to become to old for configured cmd_exec_timeout parameter */
     Thread_sleep(1200);
 
-    rc = (InformationObject)StepCommandWithCP56Time2a_create(NULL, 14005, IEC60870_STEP_INVALID_0 , false, 0, timestamp);
+    rc = (InformationObject)StepCommandWithCP56Time2a_create(NULL, 16005, IEC60870_STEP_INVALID_0 , false, 0, timestamp);
 
     CS104_Connection_sendProcessCommandEx(connection, CS101_COT_ACTIVATION, 45, rc);
 
@@ -1753,7 +2223,13 @@ TEST_F(ControlTest, ReceiveStepPointCommandWithTime)
 
     Thread_sleep(500);
 
+    /* no new command since first one as second one had invalid timestamp */
     ASSERT_EQ(1, operateHandlerCalled);
+    
+    /* expect negative ACT-CON */
+    ASSERT_EQ(1, asduHandlerCalled);
+    ASSERT_EQ(1, actConReceived);
+    ASSERT_TRUE(isNegative);
 
     free(timestamp);
 }
@@ -1761,7 +2237,9 @@ TEST_F(ControlTest, ReceiveStepPointCommandWithTime)
 TEST_F(ControlTest, ReceiveSetPointCommandNormalized)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerSetPointCommandNormalized);
 
@@ -1780,12 +2258,15 @@ TEST_F(ControlTest, ReceiveSetPointCommandNormalized)
     Thread_sleep(500);
 
     ASSERT_EQ(1, operateHandlerCalled);
+    ASSERT_EQ(0, asduHandlerCalled);
 }
 
 TEST_F(ControlTest, ReceiveSetPointCommandNormalizedWithTime)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerSetPointCommandNormalizedWithTime);
 
@@ -1806,6 +2287,7 @@ TEST_F(ControlTest, ReceiveSetPointCommandNormalizedWithTime)
     Thread_sleep(500);
 
     ASSERT_EQ(1, operateHandlerCalled);
+    ASSERT_EQ(0, asduHandlerCalled);
 
     /* wait for time to become to old for configured cmd_exec_timeout parameter */
     Thread_sleep(1200);
@@ -1818,7 +2300,13 @@ TEST_F(ControlTest, ReceiveSetPointCommandNormalizedWithTime)
 
     Thread_sleep(500);
 
+    /* no new command since first one as second one had invalid timestamp */
     ASSERT_EQ(1, operateHandlerCalled);
+    
+    /* expect negative ACT-CON */
+    ASSERT_EQ(1, asduHandlerCalled);
+    ASSERT_EQ(1, actConReceived);
+    ASSERT_TRUE(isNegative);
 
     free(timestamp);
 }
@@ -1827,7 +2315,9 @@ TEST_F(ControlTest, ReceiveSetPointCommandNormalizedWithTime)
 TEST_F(ControlTest, ReceiveSetPointCommandScaled)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerSetPointCommandScaled);
 
@@ -1846,13 +2336,16 @@ TEST_F(ControlTest, ReceiveSetPointCommandScaled)
     Thread_sleep(500);
 
     ASSERT_EQ(1, operateHandlerCalled);
+    ASSERT_EQ(0, asduHandlerCalled);
 }
 
 
 TEST_F(ControlTest, ReceiveSetPointCommandScaledWithTime)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerSetPointCommandScaledWithTime);
 
@@ -1873,6 +2366,7 @@ TEST_F(ControlTest, ReceiveSetPointCommandScaledWithTime)
     Thread_sleep(500);
 
     ASSERT_EQ(1, operateHandlerCalled);
+    ASSERT_EQ(0, asduHandlerCalled);
 
     /* wait for time to become to old for configured cmd_exec_timeout parameter */
     Thread_sleep(1200);
@@ -1885,7 +2379,13 @@ TEST_F(ControlTest, ReceiveSetPointCommandScaledWithTime)
 
     Thread_sleep(500);
 
+    /* no new command since first one as second one had invalid timestamp */
     ASSERT_EQ(1, operateHandlerCalled);
+    
+    /* expect negative ACT-CON */
+    ASSERT_EQ(1, asduHandlerCalled);
+    ASSERT_EQ(1, actConReceived);
+    ASSERT_TRUE(isNegative);
 
     free(timestamp);
 }
@@ -1893,7 +2393,9 @@ TEST_F(ControlTest, ReceiveSetPointCommandScaledWithTime)
 TEST_F(ControlTest, ReceiveSetPointCommandShort)
 {
     iec104Server->setJsonConfig(protocol_stack, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
 
     iec104Server->registerControl(operateHandlerSetPointCommandShort);
 
@@ -1912,4 +2414,5 @@ TEST_F(ControlTest, ReceiveSetPointCommandShort)
     Thread_sleep(500);
 
     ASSERT_EQ(1, operateHandlerCalled);
+    ASSERT_EQ(0, asduHandlerCalled);
 }

@@ -156,6 +156,7 @@ protected:
 
         // Create connection
         connection = CS104_Connection_create(ip, port);
+        ASSERT_NE(connection, nullptr);
 
         receivedAsdus = LinkedList_create();
     }
@@ -184,7 +185,7 @@ static bool asduHandler(void* parameter, int address, CS101_ASDU asdu)
 TEST_F(ClockSyncHandlerTest, clockSyncFalse)
 {
     iec104Server->setJsonConfig(protocol_stack_1, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     Thread_sleep(500); /* wait for the server to start */
 
@@ -218,7 +219,7 @@ TEST_F(ClockSyncHandlerTest, clockSyncFalse)
 TEST_F(ClockSyncHandlerTest, clockSyncTrue)
 {
     iec104Server->setJsonConfig(protocol_stack_2, exchanged_data, tls);
-    iec104Server->startSlave();
+    ASSERT_TRUE(iec104Server->startSlave());
 
     Thread_sleep(500); /* wait for the server to start */
 
