@@ -79,33 +79,37 @@ namespace Iec104Utility {
            return str;
         }
     }
-    
+
+    inline std::string m_toJsonMessage(const std::string& str) {
+        return std::string("{\"message\":") + str + std::string("}");
+    }
+
     /*
      * Log helper function that will log in the Fledge audit logs
      */
-    
-    inline void audit_fail(const std::string& code, const std::string& data, bool addQuotes = true) {  
+
+    inline void audit_fail(const std::string& code, const std::string& data, bool addQuotes = true) {
         // Audits accept pure json string, so if we want a simple text messages we need to add quotes to it
         std::string message = m_addQuotes(data, addQuotes);
-        AuditLogger::auditLog(code, "FAILURE", message);
+        AuditLogger::auditLog(code.c_str(), "FAILURE", m_toJsonMessage(message).c_str());
     }
 
-    inline void audit_success(const std::string& code, const std::string& data, bool addQuotes = true) { 
+    inline void audit_success(const std::string& code, const std::string& data, bool addQuotes = true) {
         // Audits accept pure json string, so if we want a simple text messages we need to add quotes to it
-        std::string message = m_addQuotes(data, addQuotes); 
-        AuditLogger::auditLog(code, "SUCCESS", message);
+        std::string message = m_addQuotes(data, addQuotes);
+        AuditLogger::auditLog(code.c_str(), "SUCCESS", m_toJsonMessage(message).c_str());
     }
 
     inline void audit_warn(const std::string& code, const std::string& data, bool addQuotes = true) {
         // Audits accept pure json string, so if we want a simple text messages we need to add quotes to it
-        std::string message = m_addQuotes(data, addQuotes);  
-        AuditLogger::auditLog(code, "WARNING", message);
+        std::string message = m_addQuotes(data, addQuotes);
+        AuditLogger::auditLog(code.c_str(), "WARNING", m_toJsonMessage(message).c_str());
     }
 
-    inline void audit_info(const std::string& code, const std::string& data, bool addQuotes = true) {  
+    inline void audit_info(const std::string& code, const std::string& data, bool addQuotes = true) {
         // Audits accept pure json string, so if we want a simple text messages we need to add quotes to it
         std::string message = m_addQuotes(data, addQuotes);
-        AuditLogger::auditLog(code, "INFORMATION", message);
+        AuditLogger::auditLog(code.c_str(), "INFORMATION", m_toJsonMessage(message).c_str());
     }
 }
 
