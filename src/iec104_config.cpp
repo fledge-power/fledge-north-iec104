@@ -170,7 +170,7 @@ IEC104Config::importTransportLayer(const Value& transportLayer)
             }
             else {
                 Iec104Utility::log_warn("%s transport_layer.mode has unknown value '%s' -> using mode: connect always", //LCOV_EXCL_LINE
-                                        beforeLog.c_str(), modeValue.c_str());
+                                        beforeLog.c_str(), modeValue.c_str()); //LCOV_EXCL_LINE
             }
         }
         else {
@@ -187,12 +187,12 @@ IEC104Config::importTransportLayer(const Value& transportLayer)
             }
             else {
                 Iec104Utility::log_warn("%s transport_layer.port value out of range [1..65535]: %d -> using default port (%d)", //LCOV_EXCL_LINE
-                                        beforeLog.c_str(), tcpPort, m_defaultTcpPort);
+                                        beforeLog.c_str(), tcpPort, m_defaultTcpPort); //LCOV_EXCL_LINE
             }
         }
         else {
             Iec104Utility::log_warn("%s transport_layer.port in not an integer -> using default port (%d)", beforeLog.c_str(), //LCOV_EXCL_LINE
-                                    m_defaultTcpPort);
+                                    m_defaultTcpPort); //LCOV_EXCL_LINE
         }
     }
 
@@ -205,7 +205,7 @@ IEC104Config::importTransportLayer(const Value& transportLayer)
             }
             else {
                 Iec104Utility::log_warn("%s transport_layer.k_value value out of range [1..32767]: %d -> using default value (%d)", //LCOV_EXCL_LINE
-                                        beforeLog.c_str(), kValue, m_k);
+                                        beforeLog.c_str(), kValue, m_k); //LCOV_EXCL_LINE
             }
         }
         else {
@@ -222,7 +222,7 @@ IEC104Config::importTransportLayer(const Value& transportLayer)
             }
             else {
                 Iec104Utility::log_warn("%s transport_layer.w_value value out of range [1..32767]: %d -> using default value (%d)", //LCOV_EXCL_LINE
-                                        beforeLog.c_str(), wValue, m_w);
+                                        beforeLog.c_str(), wValue, m_w); //LCOV_EXCL_LINE
             }
         }
         else {
@@ -239,12 +239,12 @@ IEC104Config::importTransportLayer(const Value& transportLayer)
             }
             else {
                 Iec104Utility::log_warn("%s transport_layer.t0_timeout value out of range [1..255]: %d -> using default value (%d)", //LCOV_EXCL_LINE
-                                        beforeLog.c_str(), t0Timeout, m_t0);
+                                        beforeLog.c_str(), t0Timeout, m_t0); //LCOV_EXCL_LINE
             }
         }
         else {
             Iec104Utility::log_warn("%s transport_layer.t0_timeout is not an integer -> using default value (%d)", //LCOV_EXCL_LINE
-                                    beforeLog.c_str(), m_t0);
+                                    beforeLog.c_str(), m_t0); //LCOV_EXCL_LINE
         }
     }
 
@@ -257,12 +257,12 @@ IEC104Config::importTransportLayer(const Value& transportLayer)
             }
             else {
                 Iec104Utility::log_warn("%s transport_layer.t1_timeout value out of range [1..255]: %d -> using default value (%d)", //LCOV_EXCL_LINE
-                                        beforeLog.c_str(), t1Timeout, m_t1);
+                                        beforeLog.c_str(), t1Timeout, m_t1); //LCOV_EXCL_LINE
             }
         }
         else {
             Iec104Utility::log_warn("%s transport_layer.t1_timeout is not an integer -> using default value (%d)", //LCOV_EXCL_LINE
-                                    beforeLog.c_str(), m_t1);
+                                    beforeLog.c_str(), m_t1); //LCOV_EXCL_LINE
         }
     }
 
@@ -275,12 +275,12 @@ IEC104Config::importTransportLayer(const Value& transportLayer)
             }
             else {
                 Iec104Utility::log_warn("%s transport_layer.t2_timeout value out of range [1..255]: %d -> using default value (%d)", //LCOV_EXCL_LINE
-                                        beforeLog.c_str(), t2Timeout, m_t2);
+                                        beforeLog.c_str(), t2Timeout, m_t2); //LCOV_EXCL_LINE
             }
         }
         else {
             Iec104Utility::log_warn("%s transport_layer.t2_timeout is not an integer -> using default value (%d)", //LCOV_EXCL_LINE
-                                    beforeLog.c_str(), m_t2);
+                                    beforeLog.c_str(), m_t2); //LCOV_EXCL_LINE
         }
     }
 
@@ -293,12 +293,12 @@ IEC104Config::importTransportLayer(const Value& transportLayer)
             }
             else {
                 Iec104Utility::log_warn("%s transport_layer.t3_timeout value out of range [0..+Inf]: %d -> using default value (%d)", //LCOV_EXCL_LINE
-                                        beforeLog.c_str(), t3Timeout, m_t3);
+                                        beforeLog.c_str(), t3Timeout, m_t3); //LCOV_EXCL_LINE
             }
         }
         else {
             Iec104Utility::log_warn("%s transport_layer.t3_timeout is not an integer -> using default value (%d)", //LCOV_EXCL_LINE
-                                    beforeLog.c_str(), m_t3);
+                                    beforeLog.c_str(), m_t3); //LCOV_EXCL_LINE
         }
     }
 
@@ -339,12 +339,12 @@ IEC104Config::importApplicationLayer(const Value& applicationLayer)
             }
             else {
                 Iec104Utility::log_warn("%s application_layer.ca_asdu_size value out of range [1..2]: %d -> using default value (%d)", //LCOV_EXCL_LINE
-                                        beforeLog.c_str(), caSize, m_caSize);
+                                        beforeLog.c_str(), caSize, m_caSize); //LCOV_EXCL_LINE
             }
         }
         else {
             Iec104Utility::log_warn("%s application_layer.ca_asdu_size is not an integer -> using default value (%d)", //LCOV_EXCL_LINE
-                                    beforeLog.c_str(), m_caSize);
+                                    beforeLog.c_str(), m_caSize); //LCOV_EXCL_LINE
         }
     }
 
@@ -357,12 +357,12 @@ IEC104Config::importApplicationLayer(const Value& applicationLayer)
             }
             else {
                 Iec104Utility::log_warn("%s application_layer.ioaddr_size value out of range [1..3]: %d -> using default value (%d)", //LCOV_EXCL_LINE
-                                        beforeLog.c_str(), ioaSize, m_ioaSize);
+                                        beforeLog.c_str(), ioaSize, m_ioaSize); //LCOV_EXCL_LINE
             }
         }
         else {
             Iec104Utility::log_warn("%s application_layer.ioaddr_size is not an integer -> using default value (%d)", //LCOV_EXCL_LINE
-                                    beforeLog.c_str(), m_ioaSize);
+                                    beforeLog.c_str(), m_ioaSize); //LCOV_EXCL_LINE
         }
     }
 
@@ -375,12 +375,12 @@ IEC104Config::importApplicationLayer(const Value& applicationLayer)
             }
             else {
                 Iec104Utility::log_warn("%s application_layer.asdu_size value out of range [0,11..253]: %d -> using default value (%d)", //LCOV_EXCL_LINE
-                                        beforeLog.c_str(), asduSize, m_asduSize);
+                                        beforeLog.c_str(), asduSize, m_asduSize); //LCOV_EXCL_LINE
             }
         }
         else {
             Iec104Utility::log_warn("%s application_layer.asdu_size is not an integer -> using default value (%d)", //LCOV_EXCL_LINE
-                                    beforeLog.c_str(), m_asduSize);
+                                    beforeLog.c_str(), m_asduSize); //LCOV_EXCL_LINE
         }
     }
 
@@ -390,7 +390,7 @@ IEC104Config::importApplicationLayer(const Value& applicationLayer)
         }
         else {
             Iec104Utility::log_warn("%s application_layer.time_sync is not a bool -> using default value (%s)", beforeLog.c_str(), //LCOV_EXCL_LINE
-                                    (m_timeSync?"true":"false"));
+                                    (m_timeSync?"true":"false")); //LCOV_EXCL_LINE
         }
     }
 
@@ -407,12 +407,12 @@ IEC104Config::importApplicationLayer(const Value& applicationLayer)
                         }
                         else {
                             Iec104Utility::log_error("%s application_layer.filter_list: OA address value out of range [1..255]: %d", //LCOV_EXCL_LINE
-                                                    beforeLog.c_str(), oaValue);
+                                                    beforeLog.c_str(), oaValue); //LCOV_EXCL_LINE
                         }
                     }
                     else {
                         Iec104Utility::log_error("%s application_layer.filter_list: orig_addr does not exist or is not an integer", //LCOV_EXCL_LINE
-                                                    beforeLog.c_str());
+                                                    beforeLog.c_str()); //LCOV_EXCL_LINE
                     }
                 }
                 else {
@@ -433,13 +433,13 @@ IEC104Config::importApplicationLayer(const Value& applicationLayer)
             }
             else {
                 Iec104Utility::log_warn( //LCOV_EXCL_LINE
-                    "%s application_layer.asdu_queue_size value out of range [1..+Inf]: %d -> using default value (%d)",             
+                    "%s application_layer.asdu_queue_size value out of range [1..+Inf]: %d -> using default value (%d)",              //LCOV_EXCL_LINE
                     beforeLog.c_str(), asduQueueSize, m_asduQueueSize);
             }
         }
         else {
             Iec104Utility::log_warn("%s application_layer.asdu_queue_size is not an integer -> using default value (%d)", //LCOV_EXCL_LINE
-                                    beforeLog.c_str(), m_asduQueueSize);
+                                    beforeLog.c_str(), m_asduQueueSize); //LCOV_EXCL_LINE
         }
     }
 
@@ -451,13 +451,13 @@ IEC104Config::importApplicationLayer(const Value& applicationLayer)
             }
             else {
                 Iec104Utility::log_warn( //LCOV_EXCL_LINE
-                    "%s application_layer.accept_cmd_with_time value out of range [0..2]: %d -> using default: only commands with timestamp allowed (%d)",
+                    "%s application_layer.accept_cmd_with_time value out of range [0..2]: %d -> using default: only commands with timestamp allowed (%d)", //LCOV_EXCL_LINE
                     beforeLog.c_str(), acceptCmdWithTime, m_allowedCommands);
             }
         }
         else {
             Iec104Utility::log_warn( //LCOV_EXCL_LINE
-                "%s application_layer.accept_cmd_with_time is not an integer -> using default: only commands with timestamp allowed (%d)",
+                "%s application_layer.accept_cmd_with_time is not an integer -> using default: only commands with timestamp allowed (%d)", //LCOV_EXCL_LINE
                 beforeLog.c_str(), m_allowedCommands);
         }
     }
@@ -470,12 +470,12 @@ IEC104Config::importApplicationLayer(const Value& applicationLayer)
             }
             else {
                 Iec104Utility::log_warn("%s application_layer.cmd_recv_timeout value out of range [0..+Inf]: %d -> using default: disabled (%d)", //LCOV_EXCL_LINE
-                                        beforeLog.c_str(), cmdRecvTimeout, m_cmdRecvTimeout);
+                                        beforeLog.c_str(), cmdRecvTimeout, m_cmdRecvTimeout); //LCOV_EXCL_LINE
             }
         }
         else {
              Iec104Utility::log_warn("%s application_layer.cmd_recv_timeout is not an integer -> using default: disabled (%d)", //LCOV_EXCL_LINE
-                                    beforeLog.c_str(), m_cmdRecvTimeout);
+                                    beforeLog.c_str(), m_cmdRecvTimeout); //LCOV_EXCL_LINE
         }
     }
 
@@ -487,12 +487,12 @@ IEC104Config::importApplicationLayer(const Value& applicationLayer)
             }
             else {
                 Iec104Utility::log_warn("%s application_layer.cmd_exec_timeout value out of range [0..+Inf]: %d -> using default: %d seconds", //LCOV_EXCL_LINE
-                                        beforeLog.c_str(), cmdExecTimeout, m_cmdExecTimeout);
+                                        beforeLog.c_str(), cmdExecTimeout, m_cmdExecTimeout); //LCOV_EXCL_LINE
             }
         }
         else {
              Iec104Utility::log_warn("%s application_layer.cmd_exec_timeout is not an integer -> using default: %d seconds", //LCOV_EXCL_LINE
-                                    beforeLog.c_str(), m_cmdExecTimeout);
+                                    beforeLog.c_str(), m_cmdExecTimeout); //LCOV_EXCL_LINE
         }
     }
 
@@ -516,7 +516,7 @@ IEC104Config::importProtocolConfig(const std::string& protocolConfig)
 
     if (document.Parse(const_cast<char*>(protocolConfig.c_str())).HasParseError()) {
         Iec104Utility::log_fatal("%s Parsing error in protocol_stack json, offset %u: %s", beforeLog.c_str(), //LCOV_EXCL_LINE
-                                    static_cast<unsigned>(document.GetErrorOffset()), GetParseError_En(document.GetParseError()));
+                                    static_cast<unsigned>(document.GetErrorOffset()), GetParseError_En(document.GetParseError())); //LCOV_EXCL_LINE
         return;
     }
 
@@ -597,7 +597,7 @@ IEC104Config::importExchangeConfig(const std::string& exchangeConfig)
 
     if (document.Parse(const_cast<char*>(exchangeConfig.c_str())).HasParseError()) {
         Iec104Utility::log_fatal("%s Parsing error in exchanged_data json, offset %u: %s", beforeLog.c_str(), //LCOV_EXCL_LINE
-                                    static_cast<unsigned>(document.GetErrorOffset()), GetParseError_En(document.GetParseError()));
+                                    static_cast<unsigned>(document.GetErrorOffset()), GetParseError_En(document.GetParseError())); //LCOV_EXCL_LINE
         return;
     }
 
@@ -693,24 +693,24 @@ IEC104Config::importExchangeConfig(const std::string& exchangeConfig)
                                         group = std::stoi(substr);
                                     } catch (const std::invalid_argument &e) {
                                         Iec104Utility::log_error("%s  Cannot convert group '%s' to integer: %s", //LCOV_EXCL_LINE
-                                                                beforeLog.c_str(), substr.c_str(), e.what());
+                                                                beforeLog.c_str(), substr.c_str(), e.what()); //LCOV_EXCL_LINE
                                         return;
                                     } catch (const std::out_of_range &e) {
                                         Iec104Utility::log_error("%s  Cannot convert group '%s' to integer: %s", //LCOV_EXCL_LINE
-                                                                beforeLog.c_str(), substr.c_str(), e.what());
+                                                                beforeLog.c_str(), substr.c_str(), e.what()); //LCOV_EXCL_LINE
                                         return;
                                     }
 
                                     if(group <= 0 || group >= 17){
                                         Iec104Utility::log_warn("%s %s value out of range [1..16]: %d, defaulting to station.", //LCOV_EXCL_LINE
-                                                                beforeLog.c_str(), JSON_PROT_GI_GROUPS, group, gi_groups);
+                                                                beforeLog.c_str(), JSON_PROT_GI_GROUPS, group, gi_groups); //LCOV_EXCL_LINE
                                         gi_groups = 1;   
                                         break; //LCOV_EXCL_LINE
                                     }
                                 }
                                 else {
                                     Iec104Utility::log_warn("%s %s value invalid, defaulting to station.", beforeLog.c_str(), //LCOV_EXCL_LINE
-                                                            JSON_PROT_GI_GROUPS);
+                                                            JSON_PROT_GI_GROUPS); //LCOV_EXCL_LINE
                                     gi_groups = 1;   
                                     break; //LCOV_EXCL_LINE
                                 }
@@ -721,7 +721,7 @@ IEC104Config::importExchangeConfig(const std::string& exchangeConfig)
                     }
                     else {
                         Iec104Utility::log_warn("%s %s value is not a string, defaulting to station.", beforeLog.c_str(), //LCOV_EXCL_LINE
-                                                JSON_PROT_GI_GROUPS);
+                                                JSON_PROT_GI_GROUPS); //LCOV_EXCL_LINE
                         gi_groups = 1;   
                         break; //LCOV_EXCL_LINE
                     } 
@@ -750,11 +750,11 @@ IEC104Config::importExchangeConfig(const std::string& exchangeConfig)
                         ioa = std::stoi(ioaStr);
                     } catch (const std::invalid_argument &e) {
                         Iec104Utility::log_error("%s  Cannot convert ca '%s' or ioa '%s' to integer: %s", //LCOV_EXCL_LINE
-                                                beforeLog.c_str(), caStr.c_str(), ioaStr.c_str(), e.what());
+                                                beforeLog.c_str(), caStr.c_str(), ioaStr.c_str(), e.what()); //LCOV_EXCL_LINE
                         return;
                     } catch (const std::out_of_range &e) {
                         Iec104Utility::log_error("%s  Cannot convert ca '%s' or ioa '%s' to integer: %s", //LCOV_EXCL_LINE
-                                                beforeLog.c_str(), caStr.c_str(), ioaStr.c_str(), e.what());
+                                                beforeLog.c_str(), caStr.c_str(), ioaStr.c_str(), e.what()); //LCOV_EXCL_LINE
                         return;
                     }
 
@@ -773,12 +773,12 @@ IEC104Config::importExchangeConfig(const std::string& exchangeConfig)
                     }
                     else {
                         Iec104Utility::log_debug("%s  Skip datapoint %i:%i as it is not a supported type: %s", //LCOV_EXCL_LINE
-                                                beforeLog.c_str(), ca, ioa, typeIdStr.c_str());
+                                                beforeLog.c_str(), ca, ioa, typeIdStr.c_str()); //LCOV_EXCL_LINE
                     }
                 }
                 else {
                     Iec104Utility::log_error("%s  %s value does not follow format 'XXX-YYY': %s", beforeLog.c_str(), JSON_PROT_ADDR, //LCOV_EXCL_LINE
-                                            address.c_str());
+                                            address.c_str()); //LCOV_EXCL_LINE
                     return;
                 }
             }
@@ -796,7 +796,7 @@ IEC104Config::importTlsConfig(const std::string& tlsConfig)
 
     if (document.Parse(const_cast<char*>(tlsConfig.c_str())).HasParseError()) {
         Iec104Utility::log_fatal("%s Parsing error in tls_conf json, offset %u: %s", beforeLog.c_str(), //LCOV_EXCL_LINE
-                                static_cast<unsigned>(document.GetErrorOffset()), GetParseError_En(document.GetParseError()));
+                                static_cast<unsigned>(document.GetErrorOffset()), GetParseError_En(document.GetParseError())); //LCOV_EXCL_LINE
         return;
     }
        
