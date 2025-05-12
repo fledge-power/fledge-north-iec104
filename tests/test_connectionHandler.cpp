@@ -2332,7 +2332,7 @@ TEST_F(ConnectionHandlerTest, TLSConnectionKeyDotPemCertificateDotDer) {
 //    Thread_sleep(500); /* wait for the server to start */
 
 //    bool result = CS104_Connection_connect(connection);
-    ASSERT_FALSE(result);
+//    ASSERT_FALSE(result);
 
 //    CS104_Connection_destroy(connection);
 //    TLSConfiguration_destroy(tlsConfig);
