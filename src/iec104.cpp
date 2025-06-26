@@ -533,10 +533,19 @@ IEC104Server::_monitoringThread()
                 }
             }
             else {
+                if(CS104_Slave_isRunning(m_slave) && !m_initSocketFinished){
+                    // Socket open and running, notify south
+                    char* names[1] = {(char*)"north_status"};
+                    char* properties[1] = {(char*)"init_socket_finished"};
+                    operation((char*)"north_status", 1, names, properties);
+                    m_initSocketFinished = true;
+                }
+
                 if (checkIfSouthConnected() == false) {
                     Iec104Utility::log_info("%s Server stopped - mode: CONNECT_IF_SOUTH_CONNX_STARTED", beforeLog.c_str()); //LCOV_EXCL_LINE
                     CS104_Slave_stop(m_slave);
                     serverRunning = false;//LCOV_EXCL_LINE
+                    m_initSocketFinished = false;
                 }
             }
         }
@@ -808,17 +817,13 @@ IEC104Server::m_enqueueSpontDatapoint(IEC104DataPoint* dp, CS101_CauseOfTransmis
 bool
 IEC104Server::checkIfSouthConnected()
 {
-    bool connected = false;
-
     for (auto southPlugin : m_config->GetMonitoredSouthPlugins())
     {
         if (southPlugin->GetConnxStatus() == IEC104Config::ConnectionStatus::STARTED) {
-            connected = true;
-            break; //LCOV_EXCL_LINE
+            return true;
         }
     }
-
-    return connected;
+    return false;
 }
 
 bool
