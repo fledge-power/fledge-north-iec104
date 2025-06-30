@@ -1,9 +1,12 @@
 #include <gtest/gtest.h>
+#include <regex>
+#include <reading.h>
 
 #include <lib60870/hal_thread.h>
 
 #include "iec104.h"
 #include "cs104_connection.h"
+#include "iec104_datapoint.hpp"
 
 using namespace std;
 
@@ -51,7 +54,8 @@ static string protocol_stack = QUOTE({
                 "t0_timeout":10,
                 "t1_timeout":15,
                 "t2_timeout":10,
-                "t3_timeout":20
+                "t3_timeout":20,
+                "mode": "accept_always"
             },
             "application_layer" : {
                 "ca_asdu_size":2,
@@ -73,7 +77,12 @@ static string protocol_stack = QUOTE({
                        "orig_addr":2
                     }
                 ]
-            }
+            },
+            "south_monitoring": [
+                {
+                    "asset" : "CONSTAT-1"
+                }
+            ]
         }
     });
 
@@ -1563,6 +1572,17 @@ static string exchanged_data_2 = QUOTE({
         }
     });
 
+struct receivedOperation {
+    std::string operation;
+    int paramCount;
+    std::vector<std::string> names;
+    std::vector<std::string> parameters;
+    receivedOperation(char* op, int count, char* n[], char* p[])
+        : operation(op), paramCount(count),
+        names(std::vector<std::string>(n, n+paramCount)),
+        parameters(std::vector<std::string>(p, p+paramCount)) {}
+};
+
 // Class to be called in each test, contains fixture to be used in
 class ConnectionHandlerTest : public testing::Test
 {
@@ -1583,7 +1603,78 @@ protected:
 
         delete iec104Server;
     }
+
+    static int operateHandlerCalled;
+    static std::vector<receivedOperation> calledOperations;
+    static int operateHandler(char *operation, int paramCount, char* names[], char *parameters[], ControlDestination destination, ...)
+    {
+        printf("operateHandler called with operation : %s\n", operation);
+        operateHandlerCalled++;
+
+        calledOperations.push_back(
+            receivedOperation(
+                operation,
+                paramCount,
+                names,
+                parameters
+                )
+        );
+
+        return 1;
+    }
+
+    void SendSouthEvent(std::string asset, bool withConnx, std::string connxValue, bool withGiStatus, std::string giStatusValue);
 };
+
+int ConnectionHandlerTest::operateHandlerCalled = 0;
+std::vector<receivedOperation> ConnectionHandlerTest::calledOperations = {};
+
+template <class T>
+static Datapoint* createDatapoint(const std::string& dataname,
+                                    const T value)
+{
+    DatapointValue dp_value = DatapointValue(value);
+    return new Datapoint(dataname, dp_value);
+}
+
+static Datapoint*
+createSouthEvent(bool withConnx, std::string connxValue, bool withGiStatus, std::string giStatusValue)
+{
+    auto* datapoints = new vector<Datapoint*>;
+
+    if (withConnx) {
+        datapoints->push_back(createDatapoint("connx_status", connxValue));
+    }
+
+    if (withGiStatus) {
+        datapoints->push_back(createDatapoint("gi_status", giStatusValue));
+    }
+
+    DatapointValue dpv(datapoints, true);
+
+    Datapoint* dp = new Datapoint("south_event", dpv);
+
+    return dp;
+}
+
+void
+ConnectionHandlerTest::SendSouthEvent(std::string asset, bool withConnx, std::string connxValue, bool withGiStatus, std::string giStatusValue)
+{
+    Datapoint* southEvent = createSouthEvent(true, connxValue, withGiStatus, giStatusValue);
+
+    auto* southEvents = new vector<Datapoint*>;
+
+    southEvents->push_back(southEvent);
+
+    //TODO send south event connx_started
+    Reading* reading = new Reading(asset, *southEvents);
+
+    vector<Reading*> readings;
+
+    readings.push_back(reading);
+
+    iec104Server->send(readings);
+}
 
 TEST_F(ConnectionHandlerTest, NormalConnection)
 {
@@ -1601,6 +1692,48 @@ TEST_F(ConnectionHandlerTest, NormalConnection)
 
     CS104_Connection_destroy(connection);
 }
+
+TEST_F(ConnectionHandlerTest, SyncConnectionWithSouth)
+{
+    // The north plugin sends an operation after finishing its configuration and does not open its tcp socket
+    // until south is connected. After connection, an operation is sent again.
+
+    // Create connection
+    connection = CS104_Connection_create("127.0.0.1", IEC_60870_5_104_DEFAULT_PORT);
+    ASSERT_NE(connection, nullptr);
+
+    std::string protocol_stack_aisc = std::regex_replace(
+        protocol_stack,
+        std::regex("accept_always"),
+        "accept_if_south_connx_started"
+    );
+    iec104Server->registerControl(operateHandler);
+    iec104Server->setJsonConfig(protocol_stack_aisc, exchanged_data, tls);
+    ASSERT_TRUE(iec104Server->startSlave());
+
+    Thread_sleep(500); /* wait for the server to start */
+
+    ASSERT_EQ(1, operateHandlerCalled);
+    ASSERT_STREQ("request_connection_status", calledOperations[0].operation.c_str());
+    operateHandlerCalled = 0;
+    calledOperations.clear();
+
+    ASSERT_FALSE(CS104_Connection_connect(connection));
+
+    Thread_sleep(2000); // Suppose south takes a long time to connect
+    ASSERT_EQ(0, operateHandlerCalled); // No operation received
+    ASSERT_FALSE(CS104_Connection_connect(connection)); // Still not connected
+
+    SendSouthEvent("CONSTAT-1", true, "started", true, "started");
+
+    Thread_sleep(500); /* wait for the server to start */
+
+    ASSERT_TRUE(CS104_Connection_connect(connection));
+    ASSERT_EQ(1, operateHandlerCalled);
+    ASSERT_STREQ("north_status", calledOperations[0].operation.c_str());
+    ASSERT_STREQ("init_socket_finished", calledOperations[0].parameters[0].c_str());
+}
+
 
 TEST_F(ConnectionHandlerTest, BrokenProtocolStack1)
 {
