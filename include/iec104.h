@@ -200,6 +200,8 @@ private:
     std::string m_service_name;    // Service name used to generate audits
     std::string m_last_connection_audit;      // Last audit sent. Prevent from sending the same audit multiple times
     std::string m_last_global_audit;      // Last global audit sent. Prevent from sending the same audit multiple times
+
+    bool m_initSocketFinished = false; // In AISC, true if the operation "north_status" : "init_socket_finished" has been sent.
 };
 
 #endif
