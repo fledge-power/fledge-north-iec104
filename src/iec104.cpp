@@ -1050,237 +1050,228 @@ IEC104Server::forwardCommand(CS101_ASDU asdu, InformationObject command, IMaster
 
                 SingleCommand sc = (SingleCommand)command;
 
-                s_val = (char*)(SingleCommand_getState(sc) ? "1" : "0");
-                s_select = (char*)(SingleCommand_isSelect(sc) ? "1" : "0");
-
-                parameters[VALUE] = s_val;
-                parameters[SE] = s_select;
+                parameters[VALUE] = strdup(SingleCommand_getState(sc) ? "1" : "0");
+                parameters[SE] = strdup(SingleCommand_isSelect(sc) ? "1" : "0");
 
                 addToOutstandingCommands(asdu, connection, SingleCommand_isSelect(sc));
 
                 res = operation((char*)"IEC104Command", parameterCount, names, parameters);
+                free(parameters[VALUE]);
+                free(parameters[SE]);
             }
             break; //LCOV_EXCL_LINE
 
         case C_SC_TA_1:
             {
                 parameters[TYPE] = (char*)"C_SC_TA_1";
-                
-                SingleCommandWithCP56Time2a sc = (SingleCommandWithCP56Time2a)command;
 
-                s_val = (char*)(SingleCommand_getState((SingleCommand)sc) ? "1" : "0");
-                s_select = (char*)(SingleCommand_isSelect((SingleCommand)sc) ? "1" : "0");
+                SingleCommandWithCP56Time2a sc = (SingleCommandWithCP56Time2a)command;
 
                 CP56Time2a timestamp = SingleCommandWithCP56Time2a_getTimestamp(sc);
 
                 uint64_t msTimeStamp = CP56Time2a_toMsTimestamp(timestamp);
 
-                parameters[TS] = (char*)(std::to_string(msTimeStamp).c_str());
-
-                parameters[VALUE] = s_val;
-                parameters[SE] = s_select;
+                parameters[TS] = strdup(std::to_string(msTimeStamp).c_str());
+                parameters[VALUE] = strdup(SingleCommand_getState((SingleCommand)sc) ? "1" : "0");
+                parameters[SE] = strdup(SingleCommand_isSelect((SingleCommand)sc) ? "1" : "0");
 
                 addToOutstandingCommands(asdu, connection, SingleCommand_isSelect((SingleCommand)sc));
 
                 res = operation((char*)"IEC104Command", parameterCount, names, parameters);
+                free(parameters[TS]);
+                free(parameters[VALUE]);
+                free(parameters[SE]);
             }
             break; //LCOV_EXCL_LINE
 
         case C_DC_NA_1:
             {
                 parameters[TYPE] = (char*)"C_DC_NA_1";
-                
+
                 DoubleCommand dc = (DoubleCommand)command;
 
-                s_val = (char*)std::to_string(DoubleCommand_getState(dc)).c_str();
-                s_select = (char*)(DoubleCommand_isSelect(dc) ? "1" : "0");
-
-                parameters[VALUE] = s_val;
-                parameters[SE] = s_select;
+                parameters[VALUE] = strdup(std::to_string(DoubleCommand_getState(dc)).c_str());
+                parameters[SE] = strdup(DoubleCommand_isSelect(dc) ? "1" : "0");
 
                 addToOutstandingCommands(asdu, connection, DoubleCommand_isSelect(dc));
 
                 res = operation((char*)"IEC104Command", parameterCount, names, parameters);
+                free(parameters[VALUE]);
+                free(parameters[SE]);
             }
             break; //LCOV_EXCL_LINE
 
         case C_DC_TA_1:
             {
                 parameters[TYPE] = (char*)"C_DC_TA_1";
-                
-                DoubleCommandWithCP56Time2a dc = (DoubleCommandWithCP56Time2a)command;
 
-                s_val = (char*)std::to_string(DoubleCommand_getState((DoubleCommand)dc)).c_str();
-                s_select = (char*)(DoubleCommand_isSelect((DoubleCommand)dc) ? "1" : "0");
+                DoubleCommandWithCP56Time2a dc = (DoubleCommandWithCP56Time2a)command;
 
                 CP56Time2a timestamp = DoubleCommandWithCP56Time2a_getTimestamp(dc);
 
                 uint64_t msTimeStamp = CP56Time2a_toMsTimestamp(timestamp);
 
-                parameters[TS] = (char*)(std::to_string(msTimeStamp).c_str());
-
-                parameters[VALUE] = s_val;
-                parameters[SE] = s_select;
+                parameters[TS] = strdup(std::to_string(msTimeStamp).c_str());
+                parameters[VALUE] = strdup(std::to_string(DoubleCommand_getState((DoubleCommand)dc)).c_str());
+                parameters[SE] = strdup(DoubleCommand_isSelect((DoubleCommand)dc) ? "1" : "0");
 
                 addToOutstandingCommands(asdu, connection, DoubleCommand_isSelect((DoubleCommand)dc));
 
                 res = operation((char*)"IEC104Command", parameterCount, names, parameters);
+                free(parameters[TS]);
+                free(parameters[VALUE]);
+                free(parameters[SE]);
             }
             break; //LCOV_EXCL_LINE
 
         case C_RC_NA_1:
             {
                 parameters[TYPE] = (char*)"C_RC_NA_1";
-                
+
                 StepCommand rc = (StepCommand)command;
 
-                s_val = (char*)std::to_string(StepCommand_getState(rc)).c_str();
-                s_select = (char*)(StepCommand_isSelect(rc) ? "1" : "0");
-
-                parameters[VALUE] = s_val;
-                parameters[SE] = s_select;
+                parameters[VALUE] = strdup(std::to_string(StepCommand_getState(rc)).c_str());
+                parameters[SE] = strdup(StepCommand_isSelect(rc) ? "1" : "0");
 
                 addToOutstandingCommands(asdu, connection, StepCommand_isSelect(rc));
 
                 res = operation((char*)"IEC104Command", parameterCount, names, parameters);
+                free(parameters[VALUE]);
+                free(parameters[SE]);
             }
             break; //LCOV_EXCL_LINE
 
             case C_RC_TA_1:
             {
                 parameters[TYPE] = (char*)"C_RC_TA_1";
-                
-                StepCommandWithCP56Time2a rc = (StepCommandWithCP56Time2a)command;
 
-                s_val = (char*)std::to_string(StepCommand_getState((StepCommand)rc)).c_str();
-                s_select = (char*)(StepCommand_isSelect((StepCommand)rc) ? "1" : "0");
+                StepCommandWithCP56Time2a rc = (StepCommandWithCP56Time2a)command;
 
                 CP56Time2a timestamp = StepCommandWithCP56Time2a_getTimestamp(rc);
 
                 uint64_t msTimeStamp = CP56Time2a_toMsTimestamp(timestamp);
 
-                parameters[TS] = (char*)(std::to_string(msTimeStamp).c_str());
-
-                parameters[VALUE] = s_val;
-                parameters[SE] = s_select;
+                parameters[TS] = strdup(std::to_string(msTimeStamp).c_str());
+                parameters[VALUE] = strdup(std::to_string(StepCommand_getState((StepCommand)rc)).c_str());
+                parameters[SE] = strdup(StepCommand_isSelect((StepCommand)rc) ? "1" : "0");
 
                 addToOutstandingCommands(asdu, connection, StepCommand_isSelect((StepCommand)rc));
 
                 res = operation((char*)"IEC104Command", parameterCount, names, parameters);
+                free(parameters[TS]);
+                free(parameters[VALUE]);
+                free(parameters[SE]);
             }
             break; //LCOV_EXCL_LINE
 
         case C_SE_NA_1:
             {
                 parameters[TYPE] = (char*)"C_SE_NA_1";
-                
+
                 SetpointCommandNormalized spn = (SetpointCommandNormalized)command;
 
-                s_val = (char*)(std::to_string(SetpointCommandNormalized_getValue(spn)).c_str());
-
-                parameters[VALUE] = s_val;
+                parameters[VALUE] = strdup(std::to_string(SetpointCommandNormalized_getValue(spn)).c_str());
 
                 addToOutstandingCommands(asdu, connection, false);
 
                 res = operation((char*)"IEC104Command", parameterCount, names, parameters);
+                free(parameters[VALUE]);
             }
             break;
 
         case C_SE_TA_1:
             {
                 parameters[TYPE] = (char*)"C_SE_TA_1";
-                
-                SetpointCommandNormalizedWithCP56Time2a spn = (SetpointCommandNormalizedWithCP56Time2a)command;
 
-                s_val = (char*)(std::to_string(SetpointCommandNormalized_getValue((SetpointCommandNormalized)spn)).c_str());
+                SetpointCommandNormalizedWithCP56Time2a spn = (SetpointCommandNormalizedWithCP56Time2a)command;
 
                 CP56Time2a timestamp = SetpointCommandNormalizedWithCP56Time2a_getTimestamp(spn);
 
                 uint64_t msTimeStamp = CP56Time2a_toMsTimestamp(timestamp);
 
-                parameters[TS] = (char*)(std::to_string(msTimeStamp).c_str());
+                parameters[TS] = strdup(std::to_string(msTimeStamp).c_str());
 
-                parameters[VALUE] = s_val;
+                parameters[VALUE] = strdup(std::to_string(SetpointCommandNormalized_getValue((SetpointCommandNormalized)spn)).c_str());
 
                 addToOutstandingCommands(asdu, connection, false);
 
                 res = operation((char*)"IEC104Command", parameterCount, names, parameters);
+                free(parameters[TS]);
+                free(parameters[VALUE]);
             }
             break; //LCOV_EXCL_LINE
 
         case C_SE_NB_1:
             {
                 parameters[TYPE] = (char*)"C_SE_NB_1";
-                
+
                 SetpointCommandScaled sps = (SetpointCommandScaled)command;
 
-                s_val = (char*)(std::to_string(SetpointCommandScaled_getValue(sps)).c_str());
-
-                parameters[VALUE] = s_val;
+                parameters[VALUE] = strdup(std::to_string(SetpointCommandScaled_getValue(sps)).c_str());
 
                 addToOutstandingCommands(asdu, connection, false);
 
                 res = operation((char*)"IEC104Command", parameterCount, names, parameters);
+                free(parameters[VALUE]);
             }
             break; //LCOV_EXCL_LINE
 
         case C_SE_TB_1:
             {
                 parameters[TYPE] = (char*)"C_SE_TB_1";
-                
-                SetpointCommandScaledWithCP56Time2a sps = (SetpointCommandScaledWithCP56Time2a)command;
 
-                s_val = (char*)(std::to_string(SetpointCommandScaled_getValue((SetpointCommandScaled)sps)).c_str());
+                SetpointCommandScaledWithCP56Time2a sps = (SetpointCommandScaledWithCP56Time2a)command;
 
                 CP56Time2a timestamp = SetpointCommandScaledWithCP56Time2a_getTimestamp(sps);
 
                 uint64_t msTimeStamp = CP56Time2a_toMsTimestamp(timestamp);
 
-                parameters[TS] = (char*)(std::to_string(msTimeStamp).c_str());
+                parameters[TS] = strdup(std::to_string(msTimeStamp).c_str());
 
-                parameters[VALUE] = s_val;
+                parameters[VALUE] = strdup(std::to_string(SetpointCommandScaled_getValue((SetpointCommandScaled)sps)).c_str());
 
                 addToOutstandingCommands(asdu, connection, false);
 
                 res = operation((char*)"IEC104Command", parameterCount, names, parameters);
+                free(parameters[TS]);
+                free(parameters[VALUE]);
             }
             break; //LCOV_EXCL_LINE
 
         case C_SE_NC_1:
             {
                 parameters[TYPE] = (char*)"C_SE_NC_1";
-                
+
                 SetpointCommandShort spf = (SetpointCommandShort)command;
 
-                s_val = (char*)(std::to_string(SetpointCommandShort_getValue(spf)).c_str());
-
-                parameters[VALUE] = s_val;
+                parameters[VALUE] = strdup(std::to_string(SetpointCommandShort_getValue(spf)).c_str());
 
                 addToOutstandingCommands(asdu, connection, false);
 
                 res = operation((char*)"IEC104Command", parameterCount, names, parameters);
+                free(parameters[VALUE]);
             }
             break;
 
         case C_SE_TC_1:
             {
                 parameters[TYPE] = (char*)"C_SE_TC_1";
-                
-                SetpointCommandShortWithCP56Time2a spf = (SetpointCommandShortWithCP56Time2a)command;
 
-                s_val = (char*)(std::to_string(SetpointCommandShort_getValue((SetpointCommandShort)spf)).c_str());
+                SetpointCommandShortWithCP56Time2a spf = (SetpointCommandShortWithCP56Time2a)command;
 
                 CP56Time2a timestamp = SetpointCommandShortWithCP56Time2a_getTimestamp(spf);
 
                 uint64_t msTimeStamp = CP56Time2a_toMsTimestamp(timestamp);
 
-                parameters[TS] = (char*)(std::to_string(msTimeStamp).c_str());
+                parameters[TS] = strdup(std::to_string(msTimeStamp).c_str());
 
-                parameters[VALUE] = s_val;
+                parameters[VALUE] = strdup(std::to_string(SetpointCommandShort_getValue((SetpointCommandShort)spf)).c_str());
 
                 addToOutstandingCommands(asdu, connection, false);
 
                 res = operation((char*)"IEC104Command", parameterCount, names, parameters);
+                free(parameters[TS]);
+                free(parameters[VALUE]);
             }
             break; //LCOV_EXCL_LINE
 
