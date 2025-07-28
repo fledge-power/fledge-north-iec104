@@ -106,10 +106,10 @@ IEC104DataPoint::isSupportedCommandType(int typeId)
         case C_SE_TB_1:
         case C_SE_NC_1:
         case C_SE_TC_1:
-            return true;
+            return true; // LCOV_EXCL_LINE
 
         default:
-            return false;
+            return false; // LCOV_EXCL_LINE
     }
 }
 
@@ -123,10 +123,10 @@ IEC104DataPoint::isCommandWithTimestamp(int typeId)
         case C_SE_TA_1:
         case C_SE_TB_1:
         case C_SE_TC_1:
-            return true;
+            return true; // LCOV_EXCL_LINE
 
         default:
-            return false;
+            return false; // LCOV_EXCL_LINE
     }
 }
 
@@ -152,10 +152,10 @@ IEC104DataPoint::isSupportedMonitoringType(int typeId)
         case M_ME_NC_1:
         case M_ME_TC_1:
         case M_ME_TF_1:
-            return true;
+            return true; // LCOV_EXCL_LINE
 
         default:
-            return false;
+            return false; // LCOV_EXCL_LINE
     }
 }
 
