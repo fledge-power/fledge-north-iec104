@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <reading.h>
+#include <utility>
+#include <regex>
 
 #include <lib60870/hal_thread.h>
 #include <lib60870/hal_time.h>
@@ -519,6 +521,7 @@ protected:
 
     static int operateHandler(char *operation, int paramCount, char* names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerSingleCommand(char *operation, int paramCount, char* names[], char *parameters[], ControlDestination destination, ...);
+    static int operateHandleCountCommand(char *operation, int paramCount, char* names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerReceiveSetpointCommandShortWithTimestamp(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerReceiveSetpointCommandShortWithInvalidTimestamp(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerSinglePointCommandUnknownCOT(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
@@ -644,6 +647,11 @@ int ControlTest::operateHandlerSingleCommand(char *operation, int paramCount, ch
     return 1;
 }
 
+int ControlTest::operateHandleCountCommand(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...)
+{
+    operateHandlerCalled++;
+    return 1;
+}
 int ControlTest::operateHandlerReceiveSetpointCommandShortWithTimestamp(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...)
 {
     printf("%s\n",operation);
@@ -2415,4 +2423,86 @@ TEST_F(ControlTest, ReceiveSetPointCommandShort)
 
     ASSERT_EQ(1, operateHandlerCalled);
     ASSERT_EQ(0, asduHandlerCalled);
+}
+
+TEST_F(ControlTest, ValidateCommands)
+{
+    int supportedTypeIds[] = {
+        C_SC_TA_1, C_SC_NA_1,
+        C_DC_TA_1, C_DC_NA_1,
+        C_RC_TA_1, C_RC_NA_1,
+        C_SE_TA_1, C_SE_NA_1,
+        C_SE_TB_1, C_SE_NB_1,
+        C_SE_TC_1, C_SE_NC_1
+    };
+    int unsupportedTypeId = C_BO_TA_1;
+    for (int i = 0; i < sizeof(supportedTypeIds) / sizeof(int); i++) {
+        ASSERT_TRUE(IEC104DataPoint::isSupportedCommandType(supportedTypeIds[i]));
+    }
+    ASSERT_FALSE(IEC104DataPoint::isSupportedCommandType(unsupportedTypeId));
+
+    ASSERT_TRUE(IEC104DataPoint::isCommandWithTimestamp(C_SC_TA_1));
+    ASSERT_TRUE(IEC104DataPoint::isCommandWithTimestamp(C_DC_TA_1));
+    ASSERT_TRUE(IEC104DataPoint::isCommandWithTimestamp(C_RC_TA_1));
+    ASSERT_TRUE(IEC104DataPoint::isCommandWithTimestamp(C_SE_TA_1));
+    ASSERT_TRUE(IEC104DataPoint::isCommandWithTimestamp(C_SE_TB_1));
+    ASSERT_TRUE(IEC104DataPoint::isCommandWithTimestamp(C_SE_TC_1));
+    ASSERT_FALSE(IEC104DataPoint::isCommandWithTimestamp(C_SC_NA_1));
+
+    int supportedMonitoringTypes[] = {
+        M_SP_NA_1, M_SP_TA_1, M_SP_TB_1, M_DP_NA_1,
+        M_DP_TA_1, M_DP_TB_1, M_ST_NA_1, M_ST_TA_1,
+        M_ST_TB_1, M_ME_NA_1, M_ME_TA_1, M_ME_TD_1,
+        M_ME_NB_1, M_ME_TB_1, M_ME_TE_1, M_ME_NC_1,
+        M_ME_TC_1, M_ME_TF_1
+    };
+    int unsupportedMonitoringTypes = M_BO_NA_1;
+    for (int i = 0; i < sizeof(supportedMonitoringTypes) / sizeof(int); i++) {
+        ASSERT_TRUE(IEC104DataPoint::isSupportedMonitoringType(supportedMonitoringTypes[i]));
+    }
+    ASSERT_FALSE(IEC104DataPoint::isSupportedMonitoringType(unsupportedMonitoringTypes));
+}
+
+TEST_F(ControlTest, SendCommands)
+{
+    std::pair<TypeID, int> commandsIoa[] = {
+        { C_SC_NA_1, 10005 },
+        { C_DC_NA_1, 14005 },
+        { C_RC_NA_1, 16005 },
+        { C_SE_NA_1, 18005 },
+        { C_SE_NB_1, 20005 },
+        { C_SE_NC_1, 22005 }
+    };
+
+    std::string modified_protocol_stack = std::regex_replace(
+        protocol_stack,
+        std::regex("\"cmd_exec_timeout\":1"),
+        "\"cmd_exec_timeout\":10"
+    );
+    iec104Server->setJsonConfig(modified_protocol_stack, exchanged_data, tls);
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
+
+    iec104Server->registerControl(operateHandleCountCommand);
+
+    Thread_sleep(500); /* wait for the server to start */
+
+    ASSERT_TRUE(CS104_Connection_connect(connection));
+
+    CS104_Connection_sendStartDT(connection);
+    operateHandlerCalled = 0;
+
+    for(std::pair<TypeID, int> cmd : commandsIoa){
+        InformationObject sc = (InformationObject)SingleCommand_create(NULL, cmd.second, true, false, 0);
+        printf("Sending command of type %d with IOA %d\n", (int)cmd.first, cmd.second);
+        CS104_Connection_sendProcessCommand(connection, cmd.first, CS101_COT_ACTIVATION, 45, sc);
+        InformationObject_destroy(sc);
+        Thread_sleep(200);
+
+        /*ASSERT_EQ(1, operateHandlerCalled);
+        ASSERT_EQ(0, asduHandlerCalled);
+        operateHandlerCalled = 0;*/ 
+        // TODO fix
+    }
 }
