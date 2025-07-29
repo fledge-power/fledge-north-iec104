@@ -105,7 +105,7 @@ TEST(PluginTest, PluginInfo)
 {
 	PLUGIN_INFORMATION *info = plugin_info();
 	ASSERT_EQ(0, strcmp(info->name, "iec104"));
-	ASSERT_EQ(info->type, PLUGIN_TYPE_NORTH);
+	ASSERT_EQ(0, strcmp(info->type, PLUGIN_TYPE_NORTH));
 }
 
 
