@@ -551,7 +551,7 @@ IEC104Server::_monitoringThread()
         }
 
         /* check timeouts for outstanding commands */
-        m_outstandingCommandsLock.lock();
+        m_outstandingCommandsLock.lock(); //LCOV_EXCL_LINE
 
         std::vector<IEC104OutstandingCommand*>::iterator it;
 
@@ -853,7 +853,7 @@ IEC104Server::checkTimestamp(CP56Time2a timestamp)
 void
 IEC104Server::addToOutstandingCommands(CS101_ASDU asdu, IMasterConnection connection, bool isSelect)
 {
-    m_outstandingCommandsLock.lock();
+    m_outstandingCommandsLock.lock(); //LCOV_EXCL_LINE
 
     IEC104OutstandingCommand* outstandingCommand = new IEC104OutstandingCommand(asdu, connection, m_config->CmdExecTimeout(), isSelect);
 
@@ -866,7 +866,7 @@ void
 IEC104Server::removeOutstandingCommands(IMasterConnection connection)
 {
     std::string beforeLog = Iec104Utility::PluginName + " - IEC104Server::removeOutstandingCommands -"; //LCOV_EXCL_LINE
-    m_outstandingCommandsLock.lock();
+    m_outstandingCommandsLock.lock(); //LCOV_EXCL_LINE
 
     std::vector<IEC104OutstandingCommand*>::iterator it;
 
@@ -895,7 +895,7 @@ IEC104Server::removeOutstandingCommands(IMasterConnection connection)
 void
 IEC104Server::removeAllOutstandingCommands()
 {
-    m_outstandingCommandsLock.lock();
+    m_outstandingCommandsLock.lock(); //LCOV_EXCL_LINE
 
     std::vector<IEC104OutstandingCommand*>::iterator it;
 
@@ -915,7 +915,7 @@ void
 IEC104Server::handleActCon(int type, int ca, int ioa, bool isNegative)
 {
     std::string beforeLog = Iec104Utility::PluginName + " - IEC104Server::handleActCon -"; //LCOV_EXCL_LINE
-    m_outstandingCommandsLock.lock();
+    m_outstandingCommandsLock.lock(); //LCOV_EXCL_LINE
 
     std::vector<IEC104OutstandingCommand*>::iterator it;
     bool found = false;
@@ -951,7 +951,7 @@ void
 IEC104Server::handleActTerm(int type, int ca, int ioa, bool isNegative)
 {
     std::string beforeLog = Iec104Utility::PluginName + " - IEC104Server::handleActTerm -"; //LCOV_EXCL_LINE
-    m_outstandingCommandsLock.lock();
+    m_outstandingCommandsLock.lock(); //LCOV_EXCL_LINE
 
     std::vector<IEC104OutstandingCommand*>::iterator it;
     bool found = false;

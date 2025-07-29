@@ -3,6 +3,7 @@
 #include <reading.h>
 #include <utility>
 #include <regex>
+#include <map>
 
 #include <lib60870/hal_thread.h>
 #include <lib60870/hal_time.h>
@@ -2463,15 +2464,28 @@ TEST_F(ControlTest, ValidateCommands)
     ASSERT_FALSE(IEC104DataPoint::isSupportedMonitoringType(unsupportedMonitoringTypes));
 }
 
+struct SendCommandsTestStruct{
+    TypeID typeId;
+    int ca;
+    int ioa;
+    CS101_CauseOfTransmission cot;
+    bool expectedAsduResponse;
+    bool expectedOperationResponse;
+};
+
 TEST_F(ControlTest, SendCommands)
 {
-    std::pair<TypeID, int> commandsIoa[] = {
-        { C_SC_NA_1, 10005 },
-        { C_DC_NA_1, 14005 },
-        { C_RC_NA_1, 16005 },
-        { C_SE_NA_1, 18005 },
-        { C_SE_NB_1, 20005 },
-        { C_SE_NC_1, 22005 }
+    SendCommandsTestStruct commands[] = {
+        { C_SC_NA_1, 45, 10005, CS101_COT_ACTIVATION, false, true },
+        { C_DC_NA_1, 45, 14005, CS101_COT_ACTIVATION, false, true },
+        { C_RC_NA_1, 45, 16005, CS101_COT_ACTIVATION, false, true },
+        { C_SE_NA_1, 45, 18005, CS101_COT_ACTIVATION, true, false },
+        { C_SE_NB_1, 45, 20005, CS101_COT_ACTIVATION, true, false },
+        { C_SE_NC_1, 45, 22005, CS101_COT_ACTIVATION, true, false },
+        { C_SC_NA_1, 45, 99999, CS101_COT_ACTIVATION, true, false }, // Unkown IOA
+        { C_SC_NA_1, 99, 10005, CS101_COT_ACTIVATION, true, false }, // Unkown CA
+        { C_SC_NA_1, 45, 10005, CS101_COT_FILE_TRANSFER, true, false },  // Unexpected COT
+        { C_BO_TA_1, 45, 10005, CS101_COT_ACTIVATION, true, false } // Unexpected command type
     };
 
     std::string modified_protocol_stack = std::regex_replace(
@@ -2493,16 +2507,16 @@ TEST_F(ControlTest, SendCommands)
     CS104_Connection_sendStartDT(connection);
     operateHandlerCalled = 0;
 
-    for(std::pair<TypeID, int> cmd : commandsIoa){
-        InformationObject sc = (InformationObject)SingleCommand_create(NULL, cmd.second, true, false, 0);
-        printf("Sending command of type %d with IOA %d\n", (int)cmd.first, cmd.second);
-        CS104_Connection_sendProcessCommand(connection, cmd.first, CS101_COT_ACTIVATION, 45, sc);
+    for(SendCommandsTestStruct cmd : commands){
+        InformationObject sc = (InformationObject)SingleCommand_create(NULL, cmd.ioa, true, false, 0);
+        printf("Sending command of type %d, CA : %d, IOA %d\n", cmd.typeId, cmd.ca, cmd.ioa);
+        CS104_Connection_sendProcessCommand(connection, cmd.typeId, cmd.cot, cmd.ca, sc);
         InformationObject_destroy(sc);
         Thread_sleep(200);
 
-        /*ASSERT_EQ(1, operateHandlerCalled);
-        ASSERT_EQ(0, asduHandlerCalled);
-        operateHandlerCalled = 0;*/ 
-        // TODO fix
+        ASSERT_EQ(cmd.expectedOperationResponse, operateHandlerCalled);
+        ASSERT_EQ(cmd.expectedAsduResponse, asduHandlerCalled);
+        operateHandlerCalled = 0;
+        asduHandlerCalled = 0;
     }
 }
