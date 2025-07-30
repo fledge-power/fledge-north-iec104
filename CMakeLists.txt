@@ -13,6 +13,9 @@ project(iec104)
 # then Fledge libraries and header files are pulled from FLEDGE_ROOT path.
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 if (${CMAKE_BUILD_TYPE} STREQUAL Coverage)
   message("Coverage is going to be generated")
@@ -20,8 +23,8 @@ if (${CMAKE_BUILD_TYPE} STREQUAL Coverage)
   add_subdirectory(tests)
   include(CodeCoverage)
   append_coverage_compiler_flags()
-  set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -O0")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
+  set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -O0 --coverage")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 --coverage")
   setup_target_for_coverage_gcovr_sonar(NAME "${PROJECT_NAME}_coverage_sonar"
                                       EXECUTABLE RunTests
                                       DEPENDENCIES RunTests
@@ -37,7 +40,7 @@ if (${CMAKE_BUILD_TYPE} STREQUAL Coverage)
   )
 else()
   message("Build without Coverage") 
-  set(CMAKE_CXX_FLAGS "-std=c++11 -O3")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 endif()
 
 # Generation version header file
