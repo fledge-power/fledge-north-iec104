@@ -24,7 +24,7 @@ if (${CMAKE_BUILD_TYPE} STREQUAL Coverage)
   include(CodeCoverage)
   append_coverage_compiler_flags()
   set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -O0 --coverage")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0--coverage")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 --coverage")
   setup_target_for_coverage_gcovr_sonar(NAME "${PROJECT_NAME}_coverage_sonar"
                                       EXECUTABLE RunTests
                                       DEPENDENCIES RunTests
