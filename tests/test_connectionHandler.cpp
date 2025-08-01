@@ -19,10 +19,10 @@ static string protocol_stack = QUOTE({
                     {
                        "connections":[
                           {
-                             "clt_ip":"192.168.2.244"
+                             "clt_ip":"127.0.0.1"
                           },
                           {
-                             "clt_ip":"192.168.0.11"
+                             "clt_ip":"127.0.0.1"
                           }
                        ],
                        "rg_name":"red-group-1"
@@ -34,9 +34,6 @@ static string protocol_stack = QUOTE({
                           },
                           {
                              "clt_ip":"192.168.0.11"
-                          },
-                          {
-                             "clt_ip":"192.168.0.12"
                           }
                        ],
                        "rg_name":"red-group-2"

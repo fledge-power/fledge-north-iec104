@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 
 #include <reading.h>
+#include <utility>
+#include <regex>
+#include <map>
 
 #include <lib60870/hal_thread.h>
 #include <lib60870/hal_time.h>
@@ -20,10 +23,10 @@ static string protocol_stack = QUOTE({
                     {
                        "connections":[
                           {
-                             "clt_ip":"192.168.2.244"
+                             "clt_ip":"127.0.0.1"
                           },
                           {
-                             "clt_ip":"192.168.0.11"
+                             "clt_ip":"127.0.0.1"
                           }
                        ],
                        "rg_name":"red-group-1"
@@ -519,6 +522,7 @@ protected:
 
     static int operateHandler(char *operation, int paramCount, char* names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerSingleCommand(char *operation, int paramCount, char* names[], char *parameters[], ControlDestination destination, ...);
+    static int operateHandleCountCommand(char *operation, int paramCount, char* names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerReceiveSetpointCommandShortWithTimestamp(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerReceiveSetpointCommandShortWithInvalidTimestamp(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
     static int operateHandlerSinglePointCommandUnknownCOT(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...);
@@ -611,23 +615,23 @@ int ControlTest::operateHandlerSingleCommand(char *operation, int paramCount, ch
     if(!strcmp(operation, "IEC104Command")) {
         EXPECT_EQ(9,paramCount);
         printf("PARAM COUNT: %d\n", paramCount);
-        EXPECT_EQ(names[0],"co_type");
+        EXPECT_EQ(0,strcmp(names[0],"co_type"));;
         EXPECT_EQ(0,strcmp(parameters[0],"C_SC_NA_1"));
-        EXPECT_EQ(names[1],"co_ca");
+        EXPECT_EQ(0,strcmp(names[1],"co_ca"));;
         EXPECT_EQ(parameters[1],to_string(45));
-        EXPECT_EQ(names[2],"co_ioa");
+        EXPECT_EQ(0,strcmp(names[2],"co_ioa"));;
         EXPECT_EQ(parameters[2],to_string(23005));
-        EXPECT_EQ(names[3],"co_cot");
+        EXPECT_EQ(0,strcmp(names[3],"co_cot"));;
         EXPECT_EQ(parameters[3],to_string(7));
-        EXPECT_EQ(names[4],"co_negative");
+        EXPECT_EQ(0,strcmp(names[4],"co_negative"));;
         EXPECT_EQ(parameters[4],to_string(0));
-        EXPECT_EQ(names[5],"co_se");
+        EXPECT_EQ(0,strcmp(names[5],"co_se"));;
         EXPECT_EQ(parameters[5],to_string(0));
-        EXPECT_EQ(names[6],"co_test");
+        EXPECT_EQ(0,strcmp(names[6],"co_test"));;
         EXPECT_EQ(parameters[6],to_string(0));
-        EXPECT_EQ(names[7],"co_ts");
-        EXPECT_EQ(parameters[7],"");
-        EXPECT_EQ(names[8],"co_value");
+        EXPECT_EQ(0,strcmp(names[7],"co_ts"));;
+        EXPECT_EQ(0,strcmp(parameters[7],""));
+        EXPECT_EQ(0,strcmp(names[8],"co_value"));;
         EXPECT_EQ(parameters[8],to_string(1));
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -644,29 +648,34 @@ int ControlTest::operateHandlerSingleCommand(char *operation, int paramCount, ch
     return 1;
 }
 
+int ControlTest::operateHandleCountCommand(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...)
+{
+    operateHandlerCalled++;
+    return 1;
+}
 int ControlTest::operateHandlerReceiveSetpointCommandShortWithTimestamp(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...)
 {
     printf("%s\n",operation);
     if(!strcmp(operation, "IEC104Command")) {
         EXPECT_EQ(9,paramCount);
         printf("PARAM COUNT: %d\n", paramCount);
-        EXPECT_EQ(names[0],"co_type");
+        EXPECT_EQ(0,strcmp(names[0],"co_type"));;
         EXPECT_EQ(0,strcmp(parameters[0],"C_SE_TC_1"));
-        EXPECT_EQ(names[1],"co_ca");
+        EXPECT_EQ(0,strcmp(names[1],"co_ca"));;
         EXPECT_EQ(parameters[1],to_string(45));
-        EXPECT_EQ(names[2],"co_ioa");
+        EXPECT_EQ(0,strcmp(names[2],"co_ioa"));;
         EXPECT_EQ(parameters[2],to_string(24005));
-        EXPECT_EQ(names[3],"co_cot");
+        EXPECT_EQ(0,strcmp(names[3],"co_cot"));;
         EXPECT_EQ(parameters[3],to_string(7));
-        EXPECT_EQ(names[4],"co_negative");
+        EXPECT_EQ(0,strcmp(names[4],"co_negative"));;
         EXPECT_EQ(parameters[4],to_string(0));
-        EXPECT_EQ(names[5],"co_se");
+        EXPECT_EQ(0,strcmp(names[5],"co_se"));;
         EXPECT_EQ(parameters[5],to_string(0));
-        EXPECT_EQ(names[6],"co_test");
+        EXPECT_EQ(0,strcmp(names[6],"co_test"));;
         EXPECT_EQ(parameters[6],to_string(0));
-        EXPECT_EQ(names[7],"co_ts");
-        EXPECT_NE(parameters[7],"");
-        EXPECT_EQ(names[8],"co_value");
+        EXPECT_EQ(0,strcmp(names[7],"co_ts"));;
+        EXPECT_NE(0,strcmp(parameters[7],""));
+        EXPECT_EQ(0,strcmp(names[8],"co_value"));;
         EXPECT_EQ(parameters[8],to_string(1.5f));
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -686,7 +695,7 @@ int ControlTest::operateHandlerReceiveSetpointCommandShortWithTimestamp(char *op
 int ControlTest::operateHandlerReceiveSetpointCommandShortWithInvalidTimestamp(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...)
 {
     printf("%s\n",operation);
-    EXPECT_EQ(operation,"request_connection_status");
+    EXPECT_EQ(0,strcmp(operation,"request_connection_status"));
     if(!strcmp(operation, "IEC104Command")) {
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -706,7 +715,7 @@ int ControlTest::operateHandlerReceiveSetpointCommandShortWithInvalidTimestamp(c
 int ControlTest::operateHandlerSinglePointCommandUnknownCOT(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...)
 {
     printf("%s\n",operation);
-    EXPECT_EQ(operation,"request_connection_status");
+    EXPECT_EQ(0,strcmp(operation,"request_connection_status"));
     if(!strcmp(operation, "IEC104Command")) {
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -726,7 +735,7 @@ int ControlTest::operateHandlerSinglePointCommandUnknownCOT(char *operation, int
 int ControlTest::operateHandlerSinglePointCommandUnknownCA(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...)
 {
     printf("%s\n",operation);
-    EXPECT_EQ(operation,"request_connection_status");
+    EXPECT_EQ(0,strcmp(operation,"request_connection_status"));
     if(!strcmp(operation, "IEC104Command")) {
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -746,7 +755,7 @@ int ControlTest::operateHandlerSinglePointCommandUnknownCA(char *operation, int 
 int ControlTest::operateHandlerSinglePointCommandOriginatorNotAllowed(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...)
 {
     printf("%s\n",operation);
-    EXPECT_EQ(operation,"request_connection_status");
+    EXPECT_EQ(0,strcmp(operation,"request_connection_status"));
     if(!strcmp(operation, "IEC104Command")) {
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -766,7 +775,7 @@ int ControlTest::operateHandlerSinglePointCommandOriginatorNotAllowed(char *oper
 int ControlTest::operateHandlerReceiveUnexpectedDoublePointCommand(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...)
 {
     printf("%s\n",operation);
-    EXPECT_EQ(operation,"request_connection_status");
+    EXPECT_EQ(0,strcmp(operation,"request_connection_status"));
     if(!strcmp(operation, "IEC104Command")) {
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -789,23 +798,23 @@ int ControlTest::operateHandlerCommandAckTimeout(char *operation, int paramCount
     if(!strcmp(operation, "IEC104Command")) {
         EXPECT_EQ(9,paramCount);
         printf("PARAM COUNT: %d\n", paramCount);
-        EXPECT_EQ(names[0],"co_type");
+        EXPECT_EQ(0,strcmp(names[0],"co_type"));;
         EXPECT_EQ(0,strcmp(parameters[0],"C_SC_NA_1"));
-        EXPECT_EQ(names[1],"co_ca");
+        EXPECT_EQ(0,strcmp(names[1],"co_ca"));;
         EXPECT_EQ(parameters[1],to_string(45));
-        EXPECT_EQ(names[2],"co_ioa");
+        EXPECT_EQ(0,strcmp(names[2],"co_ioa"));;
         EXPECT_EQ(parameters[2],to_string(10005));
-        EXPECT_EQ(names[3],"co_cot");
+        EXPECT_EQ(0,strcmp(names[3],"co_cot"));;
         EXPECT_EQ(parameters[3],to_string(7));
-        EXPECT_EQ(names[4],"co_negative");
+        EXPECT_EQ(0,strcmp(names[4],"co_negative"));;
         EXPECT_EQ(parameters[4],to_string(0));
-        EXPECT_EQ(names[5],"co_se");
+        EXPECT_EQ(0,strcmp(names[5],"co_se"));;
         EXPECT_EQ(parameters[5],to_string(0));
-        EXPECT_EQ(names[6],"co_test");
+        EXPECT_EQ(0,strcmp(names[6],"co_test"));;
         EXPECT_EQ(parameters[6],to_string(0));
-        EXPECT_EQ(names[7],"co_ts");
-        EXPECT_EQ(parameters[7],"");
-        EXPECT_EQ(names[8],"co_value");
+        EXPECT_EQ(0,strcmp(names[7],"co_ts"));;
+        EXPECT_EQ(0,strcmp(parameters[7],""));
+        EXPECT_EQ(0,strcmp(names[8],"co_value"));;
         EXPECT_EQ(parameters[8],to_string(1));
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -828,23 +837,23 @@ int ControlTest::operateHandlerCommandActCon(char *operation, int paramCount, ch
     if(!strcmp(operation, "IEC104Command")) {
         EXPECT_EQ(9,paramCount);
         printf("PARAM COUNT: %d\n", paramCount);
-        EXPECT_EQ(names[0],"co_type");
+        EXPECT_EQ(0,strcmp(names[0],"co_type"));;
         EXPECT_EQ(0,strcmp(parameters[0],"C_SC_NA_1"));
-        EXPECT_EQ(names[1],"co_ca");
+        EXPECT_EQ(0,strcmp(names[1],"co_ca"));;
         EXPECT_EQ(parameters[1],to_string(45));
-        EXPECT_EQ(names[2],"co_ioa");
+        EXPECT_EQ(0,strcmp(names[2],"co_ioa"));;
         EXPECT_EQ(parameters[2],to_string(10005));
-        EXPECT_EQ(names[3],"co_cot");
+        EXPECT_EQ(0,strcmp(names[3],"co_cot"));;
         EXPECT_EQ(parameters[3],to_string(7));
-        EXPECT_EQ(names[4],"co_negative");
+        EXPECT_EQ(0,strcmp(names[4],"co_negative"));;
         EXPECT_EQ(parameters[4],to_string(0));
-        EXPECT_EQ(names[5],"co_se");
+        EXPECT_EQ(0,strcmp(names[5],"co_se"));;
         EXPECT_EQ(parameters[5],to_string(0));
-        EXPECT_EQ(names[6],"co_test");
+        EXPECT_EQ(0,strcmp(names[6],"co_test"));;
         EXPECT_EQ(parameters[6],to_string(0));
-        EXPECT_EQ(names[7],"co_ts");
-        EXPECT_EQ(parameters[7],"");
-        EXPECT_EQ(names[8],"co_value");
+        EXPECT_EQ(0,strcmp(names[7],"co_ts"));;
+        EXPECT_EQ(0,strcmp(parameters[7],""));
+        EXPECT_EQ(0,strcmp(names[8],"co_value"));;
         EXPECT_EQ(parameters[8],to_string(1));
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -867,23 +876,23 @@ int ControlTest::operateHandlerCommandisNegative(char *operation, int paramCount
     if(!strcmp(operation, "IEC104Command")) {
         EXPECT_EQ(9,paramCount);
         printf("PARAM COUNT: %d\n", paramCount);
-        EXPECT_EQ(names[0],"co_type");
+        EXPECT_EQ(0,strcmp(names[0],"co_type"));;
         EXPECT_EQ(0,strcmp(parameters[0],"C_SC_NA_1"));
-        EXPECT_EQ(names[1],"co_ca");
+        EXPECT_EQ(0,strcmp(names[1],"co_ca"));;
         EXPECT_EQ(parameters[1],to_string(45));
-        EXPECT_EQ(names[2],"co_ioa");
+        EXPECT_EQ(0,strcmp(names[2],"co_ioa"));;
         EXPECT_EQ(parameters[2],to_string(10005));
-        EXPECT_EQ(names[3],"co_cot");
+        EXPECT_EQ(0,strcmp(names[3],"co_cot"));;
         EXPECT_EQ(parameters[3],to_string(7));
-        EXPECT_EQ(names[4],"co_negative");
+        EXPECT_EQ(0,strcmp(names[4],"co_negative"));;
         EXPECT_EQ(parameters[4],to_string(0));
-        EXPECT_EQ(names[5],"co_se");
+        EXPECT_EQ(0,strcmp(names[5],"co_se"));;
         EXPECT_EQ(parameters[5],to_string(0));
-        EXPECT_EQ(names[6],"co_test");
+        EXPECT_EQ(0,strcmp(names[6],"co_test"));;
         EXPECT_EQ(parameters[6],to_string(0));
-        EXPECT_EQ(names[7],"co_ts");
-        EXPECT_EQ(parameters[7],"");
-        EXPECT_EQ(names[8],"co_value");
+        EXPECT_EQ(0,strcmp(names[7],"co_ts"));;
+        EXPECT_EQ(0,strcmp(parameters[7],""));
+        EXPECT_EQ(0,strcmp(names[8],"co_value"));;
         EXPECT_EQ(parameters[8],to_string(1));
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -903,7 +912,7 @@ int ControlTest::operateHandlerCommandisNegative(char *operation, int paramCount
 int ControlTest::operateHandlerSinglePointCommandIOMissing(char *operation, int paramCount, char *names[], char *parameters[], ControlDestination destination, ...)
 {
     printf("%s\n",operation);
-    EXPECT_EQ(operation,"request_connection_status");
+    EXPECT_EQ(0,strcmp(operation,"request_connection_status"));
     if(!strcmp(operation, "IEC104Command")) {
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -925,23 +934,23 @@ int ControlTest::operateHandlerReceiveSinglePointCommandWithTime(char *operation
     if(!strcmp(operation, "IEC104Command")) {
         EXPECT_EQ(9,paramCount);
         printf("PARAM COUNT: %d\n", paramCount);
-        EXPECT_EQ(names[0],"co_type");
+        EXPECT_EQ(0,strcmp(names[0],"co_type"));;
         EXPECT_EQ(0,strcmp(parameters[0],"C_SC_TA_1"));
-        EXPECT_EQ(names[1],"co_ca");
+        EXPECT_EQ(0,strcmp(names[1],"co_ca"));;
         EXPECT_EQ(parameters[1],to_string(45));
-        EXPECT_EQ(names[2],"co_ioa");
+        EXPECT_EQ(0,strcmp(names[2],"co_ioa"));;
         EXPECT_EQ(parameters[2],to_string(10005));
-        EXPECT_EQ(names[3],"co_cot");
+        EXPECT_EQ(0,strcmp(names[3],"co_cot"));;
         EXPECT_EQ(parameters[3],to_string(7));
-        EXPECT_EQ(names[4],"co_negative");
+        EXPECT_EQ(0,strcmp(names[4],"co_negative"));;
         EXPECT_EQ(parameters[4],to_string(0));
-        EXPECT_EQ(names[5],"co_se");
+        EXPECT_EQ(0,strcmp(names[5],"co_se"));;
         EXPECT_EQ(parameters[5],to_string(0));
-        EXPECT_EQ(names[6],"co_test");
+        EXPECT_EQ(0,strcmp(names[6],"co_test"));;
         EXPECT_EQ(parameters[6],to_string(0));
-        EXPECT_EQ(names[7],"co_ts");
-        EXPECT_NE(parameters[7],"");
-        EXPECT_EQ(names[8],"co_value");
+        EXPECT_EQ(0,strcmp(names[7],"co_ts"));;
+        EXPECT_NE(0,strcmp(parameters[7],""));
+        EXPECT_EQ(0,strcmp(names[8],"co_value"));;
         EXPECT_EQ(parameters[8],to_string(1));
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -963,23 +972,23 @@ int ControlTest::operateHandlerDoublePointCommand(char *operation, int paramCoun
     if(!strcmp(operation, "IEC104Command")) {
         EXPECT_EQ(9,paramCount);
         printf("PARAM COUNT: %d\n", paramCount);
-        EXPECT_EQ(names[0],"co_type");
+        EXPECT_EQ(0,strcmp(names[0],"co_type"));;
         EXPECT_EQ(0,strcmp(parameters[0],"C_DC_NA_1"));
-        EXPECT_EQ(names[1],"co_ca");
+        EXPECT_EQ(0,strcmp(names[1],"co_ca"));;
         EXPECT_EQ(parameters[1],to_string(45));
-        EXPECT_EQ(names[2],"co_ioa");
+        EXPECT_EQ(0,strcmp(names[2],"co_ioa"));;
         EXPECT_EQ(parameters[2],to_string(14005));
-        EXPECT_EQ(names[3],"co_cot");
+        EXPECT_EQ(0,strcmp(names[3],"co_cot"));;
         EXPECT_EQ(parameters[3],to_string(7));
-        EXPECT_EQ(names[4],"co_negative");
+        EXPECT_EQ(0,strcmp(names[4],"co_negative"));;
         EXPECT_EQ(parameters[4],to_string(0));
-        EXPECT_EQ(names[5],"co_se");
+        EXPECT_EQ(0,strcmp(names[5],"co_se"));;
         EXPECT_EQ(parameters[5],to_string(0));
-        EXPECT_EQ(names[6],"co_test");
+        EXPECT_EQ(0,strcmp(names[6],"co_test"));;
         EXPECT_EQ(parameters[6],to_string(0));
-        EXPECT_EQ(names[7],"co_ts");
-        EXPECT_EQ(parameters[7],"");
-        EXPECT_EQ(names[8],"co_value");
+        EXPECT_EQ(0,strcmp(names[7],"co_ts"));;
+        EXPECT_EQ(0,strcmp(parameters[7],""));
+        EXPECT_EQ(0,strcmp(names[8],"co_value"));;
         EXPECT_EQ(parameters[8],to_string(1));
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -1001,23 +1010,23 @@ int ControlTest::operateHandlerDoublePointCommandWithTime(char *operation, int p
     if(!strcmp(operation, "IEC104Command")) {
         EXPECT_EQ(9,paramCount);
         printf("PARAM COUNT: %d\n", paramCount);
-        EXPECT_EQ(names[0],"co_type");
+        EXPECT_EQ(0,strcmp(names[0],"co_type"));;
         EXPECT_EQ(0,strcmp(parameters[0],"C_DC_TA_1"));
-        EXPECT_EQ(names[1],"co_ca");
+        EXPECT_EQ(0,strcmp(names[1],"co_ca"));;
         EXPECT_EQ(parameters[1],to_string(45));
-        EXPECT_EQ(names[2],"co_ioa");
+        EXPECT_EQ(0,strcmp(names[2],"co_ioa"));;
         EXPECT_EQ(parameters[2],to_string(14005));
-        EXPECT_EQ(names[3],"co_cot");
+        EXPECT_EQ(0,strcmp(names[3],"co_cot"));;
         EXPECT_EQ(parameters[3],to_string(7));
-        EXPECT_EQ(names[4],"co_negative");
+        EXPECT_EQ(0,strcmp(names[4],"co_negative"));;
         EXPECT_EQ(parameters[4],to_string(0));
-        EXPECT_EQ(names[5],"co_se");
+        EXPECT_EQ(0,strcmp(names[5],"co_se"));;
         EXPECT_EQ(parameters[5],to_string(0));
-        EXPECT_EQ(names[6],"co_test");
+        EXPECT_EQ(0,strcmp(names[6],"co_test"));;
         EXPECT_EQ(parameters[6],to_string(0));
-        EXPECT_EQ(names[7],"co_ts");
-        EXPECT_NE(parameters[7],"");
-        EXPECT_EQ(names[8],"co_value");
+        EXPECT_EQ(0,strcmp(names[7],"co_ts"));;
+        EXPECT_NE(0,strcmp(parameters[7],""));
+        EXPECT_EQ(0,strcmp(names[8],"co_value"));;
         EXPECT_EQ(parameters[8],to_string(1));
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -1040,23 +1049,23 @@ int ControlTest::operateHandlerMultipleSinglePointCommandWithTime(char *operatio
     if(!strcmp(operation, "IEC104Command")) {
         EXPECT_EQ(9,paramCount);
         printf("PARAM COUNT: %d\n", paramCount);
-        EXPECT_EQ(names[0],"co_type");
+        EXPECT_EQ(0,strcmp(names[0],"co_type"));;
         EXPECT_EQ(0,strcmp(parameters[0],"C_SC_TA_1"));
-        EXPECT_EQ(names[1],"co_ca");
+        EXPECT_EQ(0,strcmp(names[1],"co_ca"));;
         EXPECT_EQ(parameters[1],to_string(45));
-        EXPECT_EQ(names[2],"co_ioa");
+        EXPECT_EQ(0,strcmp(names[2],"co_ioa"));;
         EXPECT_EQ(parameters[2],to_string(10005));
-        EXPECT_EQ(names[3],"co_cot");
+        EXPECT_EQ(0,strcmp(names[3],"co_cot"));;
         EXPECT_EQ(parameters[3],to_string(7));
-        EXPECT_EQ(names[4],"co_negative");
+        EXPECT_EQ(0,strcmp(names[4],"co_negative"));;
         EXPECT_EQ(parameters[4],to_string(0));
-        EXPECT_EQ(names[5],"co_se");
+        EXPECT_EQ(0,strcmp(names[5],"co_se"));;
         EXPECT_EQ(parameters[5],to_string(0));
-        EXPECT_EQ(names[6],"co_test");
+        EXPECT_EQ(0,strcmp(names[6],"co_test"));;
         EXPECT_EQ(parameters[6],to_string(0));
-        EXPECT_EQ(names[7],"co_ts");
-        EXPECT_NE(parameters[7],"");
-        EXPECT_EQ(names[8],"co_value");
+        EXPECT_EQ(0,strcmp(names[7],"co_ts"));;
+        EXPECT_NE(0,strcmp(parameters[7],""));
+        EXPECT_EQ(0,strcmp(names[8],"co_value"));;
         EXPECT_EQ(parameters[8],to_string(1));
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -1079,23 +1088,23 @@ int ControlTest::operateHandlerStepPointCommand(char *operation, int paramCount,
     if(!strcmp(operation, "IEC104Command")) {
         EXPECT_EQ(9,paramCount);
         printf("PARAM COUNT: %d\n", paramCount);
-        EXPECT_EQ(names[0],"co_type");
+        EXPECT_EQ(0,strcmp(names[0],"co_type"));;
         EXPECT_EQ(0,strcmp(parameters[0],"C_RC_NA_1"));
-        EXPECT_EQ(names[1],"co_ca");
+        EXPECT_EQ(0,strcmp(names[1],"co_ca"));;
         EXPECT_EQ(parameters[1],to_string(45));
-        EXPECT_EQ(names[2],"co_ioa");
+        EXPECT_EQ(0,strcmp(names[2],"co_ioa"));;
         EXPECT_EQ(parameters[2],to_string(16005));
-        EXPECT_EQ(names[3],"co_cot");
+        EXPECT_EQ(0,strcmp(names[3],"co_cot"));;
         EXPECT_EQ(parameters[3],to_string(7));
-        EXPECT_EQ(names[4],"co_negative");
+        EXPECT_EQ(0,strcmp(names[4],"co_negative"));;
         EXPECT_EQ(parameters[4],to_string(0));
-        EXPECT_EQ(names[5],"co_se");
+        EXPECT_EQ(0,strcmp(names[5],"co_se"));;
         EXPECT_EQ(parameters[5],to_string(0));
-        EXPECT_EQ(names[6],"co_test");
+        EXPECT_EQ(0,strcmp(names[6],"co_test"));;
         EXPECT_EQ(parameters[6],to_string(0));
-        EXPECT_EQ(names[7],"co_ts");
-        EXPECT_EQ(parameters[7],"");
-        EXPECT_EQ(names[8],"co_value");
+        EXPECT_EQ(0,strcmp(names[7],"co_ts"));;
+        EXPECT_EQ(0,strcmp(parameters[7],""));
+        EXPECT_EQ(0,strcmp(names[8],"co_value"));;
         EXPECT_EQ(parameters[8],to_string(0));
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -1118,23 +1127,23 @@ int ControlTest::operateHandlerStepPointCommandWithTime(char *operation, int par
     if(!strcmp(operation, "IEC104Command")) {
         EXPECT_EQ(9,paramCount);
         printf("PARAM COUNT: %d\n", paramCount);
-        EXPECT_EQ(names[0],"co_type");
+        EXPECT_EQ(0,strcmp(names[0],"co_type"));;
         EXPECT_EQ(0,strcmp(parameters[0],"C_RC_TA_1"));
-        EXPECT_EQ(names[1],"co_ca");
+        EXPECT_EQ(0,strcmp(names[1],"co_ca"));;
         EXPECT_EQ(parameters[1],to_string(45));
-        EXPECT_EQ(names[2],"co_ioa");
+        EXPECT_EQ(0,strcmp(names[2],"co_ioa"));;
         EXPECT_EQ(parameters[2],to_string(16005));
-        EXPECT_EQ(names[3],"co_cot");
+        EXPECT_EQ(0,strcmp(names[3],"co_cot"));;
         EXPECT_EQ(parameters[3],to_string(7));
-        EXPECT_EQ(names[4],"co_negative");
+        EXPECT_EQ(0,strcmp(names[4],"co_negative"));;
         EXPECT_EQ(parameters[4],to_string(0));
-        EXPECT_EQ(names[5],"co_se");
+        EXPECT_EQ(0,strcmp(names[5],"co_se"));;
         EXPECT_EQ(parameters[5],to_string(0));
-        EXPECT_EQ(names[6],"co_test");
+        EXPECT_EQ(0,strcmp(names[6],"co_test"));;
         EXPECT_EQ(parameters[6],to_string(0));
-        EXPECT_EQ(names[7],"co_ts");
-        EXPECT_NE(parameters[7],"");
-        EXPECT_EQ(names[8],"co_value");
+        EXPECT_EQ(0,strcmp(names[7],"co_ts"));;
+        EXPECT_NE(0,strcmp(parameters[7],""));
+        EXPECT_EQ(0,strcmp(names[8],"co_value"));;
         EXPECT_EQ(parameters[8],to_string(0));
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -1157,23 +1166,23 @@ int ControlTest::operateHandlerSetPointCommandNormalized(char *operation, int pa
     if(!strcmp(operation, "IEC104Command")) {
         EXPECT_EQ(9,paramCount);
         printf("PARAM COUNT: %d\n", paramCount);
-        EXPECT_EQ(names[0],"co_type");
+        EXPECT_EQ(0,strcmp(names[0],"co_type"));;
         EXPECT_EQ(0,strcmp(parameters[0],"C_SE_NA_1"));
-        EXPECT_EQ(names[1],"co_ca");
+        EXPECT_EQ(0,strcmp(names[1],"co_ca"));;
         EXPECT_EQ(parameters[1],to_string(45));
-        EXPECT_EQ(names[2],"co_ioa");
+        EXPECT_EQ(0,strcmp(names[2],"co_ioa"));;
         EXPECT_EQ(parameters[2],to_string(18005));
-        EXPECT_EQ(names[3],"co_cot");
+        EXPECT_EQ(0,strcmp(names[3],"co_cot"));;
         EXPECT_EQ(parameters[3],to_string(7));
-        EXPECT_EQ(names[4],"co_negative");
+        EXPECT_EQ(0,strcmp(names[4],"co_negative"));;
         EXPECT_EQ(parameters[4],to_string(0));
-        EXPECT_EQ(names[5],"co_se");
+        EXPECT_EQ(0,strcmp(names[5],"co_se"));;
         EXPECT_EQ(parameters[5],to_string(0));
-        EXPECT_EQ(names[6],"co_test");
+        EXPECT_EQ(0,strcmp(names[6],"co_test"));;
         EXPECT_EQ(parameters[6],to_string(0));
-        EXPECT_EQ(names[7],"co_ts");
-        EXPECT_EQ(parameters[7],"");
-        EXPECT_EQ(names[8],"co_value");
+        EXPECT_EQ(0,strcmp(names[7],"co_ts"));;
+        EXPECT_EQ(0,strcmp(parameters[7],""));
+        EXPECT_EQ(0,strcmp(names[8],"co_value"));;
         EXPECT_EQ(parameters[8],to_string(0.000015));
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -1196,23 +1205,23 @@ int ControlTest::operateHandlerSetPointCommandNormalizedWithTime(char *operation
     if(!strcmp(operation, "IEC104Command")) {
         EXPECT_EQ(9,paramCount);
         printf("PARAM COUNT: %d\n", paramCount);
-        EXPECT_EQ(names[0],"co_type");
+        EXPECT_EQ(0,strcmp(names[0],"co_type"));;
         EXPECT_EQ(0,strcmp(parameters[0],"C_SE_TA_1"));
-        EXPECT_EQ(names[1],"co_ca");
+        EXPECT_EQ(0,strcmp(names[1],"co_ca"));;
         EXPECT_EQ(parameters[1],to_string(45));
-        EXPECT_EQ(names[2],"co_ioa");
+        EXPECT_EQ(0,strcmp(names[2],"co_ioa"));;
         EXPECT_EQ(parameters[2],to_string(18005));
-        EXPECT_EQ(names[3],"co_cot");
+        EXPECT_EQ(0,strcmp(names[3],"co_cot"));;
         EXPECT_EQ(parameters[3],to_string(7));
-        EXPECT_EQ(names[4],"co_negative");
+        EXPECT_EQ(0,strcmp(names[4],"co_negative"));;
         EXPECT_EQ(parameters[4],to_string(0));
-        EXPECT_EQ(names[5],"co_se");
+        EXPECT_EQ(0,strcmp(names[5],"co_se"));;
         EXPECT_EQ(parameters[5],to_string(0));
-        EXPECT_EQ(names[6],"co_test");
+        EXPECT_EQ(0,strcmp(names[6],"co_test"));;
         EXPECT_EQ(parameters[6],to_string(0));
-        EXPECT_EQ(names[7],"co_ts");
-        EXPECT_NE(parameters[7],"");
-        EXPECT_EQ(names[8],"co_value");
+        EXPECT_EQ(0,strcmp(names[7],"co_ts"));;
+        EXPECT_NE(0,strcmp(parameters[7],""));
+        EXPECT_EQ(0,strcmp(names[8],"co_value"));;
         EXPECT_EQ(parameters[8],to_string(0.000015));
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -1235,23 +1244,23 @@ int ControlTest::operateHandlerSetPointCommandScaled(char *operation, int paramC
     if(!strcmp(operation, "IEC104Command")) {
         EXPECT_EQ(9,paramCount);
         printf("PARAM COUNT: %d\n", paramCount);
-        EXPECT_EQ(names[0],"co_type");
+        EXPECT_EQ(0,strcmp(names[0],"co_type"));;
         EXPECT_EQ(0,strcmp(parameters[0],"C_SE_NB_1"));
-        EXPECT_EQ(names[1],"co_ca");
+        EXPECT_EQ(0,strcmp(names[1],"co_ca"));;
         EXPECT_EQ(parameters[1],to_string(45));
-        EXPECT_EQ(names[2],"co_ioa");
+        EXPECT_EQ(0,strcmp(names[2],"co_ioa"));;
         EXPECT_EQ(parameters[2],to_string(20005));
-        EXPECT_EQ(names[3],"co_cot");
+        EXPECT_EQ(0,strcmp(names[3],"co_cot"));;
         EXPECT_EQ(parameters[3],to_string(7));
-        EXPECT_EQ(names[4],"co_negative");
+        EXPECT_EQ(0,strcmp(names[4],"co_negative"));;
         EXPECT_EQ(parameters[4],to_string(0));
-        EXPECT_EQ(names[5],"co_se");
+        EXPECT_EQ(0,strcmp(names[5],"co_se"));;
         EXPECT_EQ(parameters[5],to_string(0));
-        EXPECT_EQ(names[6],"co_test");
+        EXPECT_EQ(0,strcmp(names[6],"co_test"));;
         EXPECT_EQ(parameters[6],to_string(0));
-        EXPECT_EQ(names[7],"co_ts");
-        EXPECT_EQ(parameters[7],"");
-        EXPECT_EQ(names[8],"co_value");
+        EXPECT_EQ(0,strcmp(names[7],"co_ts"));;
+        EXPECT_EQ(0,strcmp(parameters[7],""));
+        EXPECT_EQ(0,strcmp(names[8],"co_value"));;
         EXPECT_EQ(parameters[8],to_string(0));
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -1274,23 +1283,23 @@ int ControlTest::operateHandlerSetPointCommandScaledWithTime(char *operation, in
     if(!strcmp(operation, "IEC104Command")) {
         EXPECT_EQ(9,paramCount);
         printf("PARAM COUNT: %d\n", paramCount);
-        EXPECT_EQ(names[0],"co_type");
+        EXPECT_EQ(0,strcmp(names[0],"co_type"));;
         EXPECT_EQ(0,strcmp(parameters[0],"C_SE_TB_1"));
-        EXPECT_EQ(names[1],"co_ca");
+        EXPECT_EQ(0,strcmp(names[1],"co_ca"));;
         EXPECT_EQ(parameters[1],to_string(45));
-        EXPECT_EQ(names[2],"co_ioa");
+        EXPECT_EQ(0,strcmp(names[2],"co_ioa"));;
         EXPECT_EQ(parameters[2],to_string(20005));
-        EXPECT_EQ(names[3],"co_cot");
+        EXPECT_EQ(0,strcmp(names[3],"co_cot"));;
         EXPECT_EQ(parameters[3],to_string(7));
-        EXPECT_EQ(names[4],"co_negative");
+        EXPECT_EQ(0,strcmp(names[4],"co_negative"));;
         EXPECT_EQ(parameters[4],to_string(0));
-        EXPECT_EQ(names[5],"co_se");
+        EXPECT_EQ(0,strcmp(names[5],"co_se"));;
         EXPECT_EQ(parameters[5],to_string(0));
-        EXPECT_EQ(names[6],"co_test");
+        EXPECT_EQ(0,strcmp(names[6],"co_test"));;
         EXPECT_EQ(parameters[6],to_string(0));
-        EXPECT_EQ(names[7],"co_ts");
-        EXPECT_NE(parameters[7],"");
-        EXPECT_EQ(names[8],"co_value");
+        EXPECT_EQ(0,strcmp(names[7],"co_ts"));;
+        EXPECT_NE(0,strcmp(parameters[7],""));
+        EXPECT_EQ(0,strcmp(names[8],"co_value"));;
         EXPECT_EQ(parameters[8],to_string(0));
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -1313,23 +1322,23 @@ int ControlTest::operateHandlerSetPointCommandShort(char *operation, int paramCo
     if(!strcmp(operation, "IEC104Command")) {
         EXPECT_EQ(9,paramCount);
         printf("PARAM COUNT: %d\n", paramCount);
-        EXPECT_EQ(names[0],"co_type");
+        EXPECT_EQ(0,strcmp(names[0],"co_type"));;
         EXPECT_EQ(0,strcmp(parameters[0],"C_SE_NC_1"));
-        EXPECT_EQ(names[1],"co_ca");
+        EXPECT_EQ(0,strcmp(names[1],"co_ca"));;
         EXPECT_EQ(parameters[1],to_string(45));
-        EXPECT_EQ(names[2],"co_ioa");
+        EXPECT_EQ(0,strcmp(names[2],"co_ioa"));;
         EXPECT_EQ(parameters[2],to_string(22005));
-        EXPECT_EQ(names[3],"co_cot");
+        EXPECT_EQ(0,strcmp(names[3],"co_cot"));;
         EXPECT_EQ(parameters[3],to_string(7));
-        EXPECT_EQ(names[4],"co_negative");
+        EXPECT_EQ(0,strcmp(names[4],"co_negative"));;
         EXPECT_EQ(parameters[4],to_string(0));
-        EXPECT_EQ(names[5],"co_se");
+        EXPECT_EQ(0,strcmp(names[5],"co_se"));;
         EXPECT_EQ(parameters[5],to_string(0));
-        EXPECT_EQ(names[6],"co_test");
+        EXPECT_EQ(0,strcmp(names[6],"co_test"));;
         EXPECT_EQ(parameters[6],to_string(0));
-        EXPECT_EQ(names[7],"co_ts");
-        EXPECT_EQ(parameters[7],"");
-        EXPECT_EQ(names[8],"co_value");
+        EXPECT_EQ(0,strcmp(names[7],"co_ts"));;
+        EXPECT_EQ(0,strcmp(parameters[7],""));
+        EXPECT_EQ(0,strcmp(names[8],"co_value"));;
         EXPECT_EQ(parameters[8],to_string(0.0f));
         for(int i = 0; i < paramCount; i++) {
             printf("PARAM: %s: %s\n", names[i], parameters[i]);
@@ -2415,4 +2424,99 @@ TEST_F(ControlTest, ReceiveSetPointCommandShort)
 
     ASSERT_EQ(1, operateHandlerCalled);
     ASSERT_EQ(0, asduHandlerCalled);
+}
+
+TEST_F(ControlTest, ValidateCommands)
+{
+    int supportedTypeIds[] = {
+        C_SC_TA_1, C_SC_NA_1,
+        C_DC_TA_1, C_DC_NA_1,
+        C_RC_TA_1, C_RC_NA_1,
+        C_SE_TA_1, C_SE_NA_1,
+        C_SE_TB_1, C_SE_NB_1,
+        C_SE_TC_1, C_SE_NC_1
+    };
+    int unsupportedTypeId = C_BO_TA_1;
+    for (int i = 0; i < sizeof(supportedTypeIds) / sizeof(int); i++) {
+        ASSERT_TRUE(IEC104DataPoint::isSupportedCommandType(supportedTypeIds[i]));
+    }
+    ASSERT_FALSE(IEC104DataPoint::isSupportedCommandType(unsupportedTypeId));
+
+    ASSERT_TRUE(IEC104DataPoint::isCommandWithTimestamp(C_SC_TA_1));
+    ASSERT_TRUE(IEC104DataPoint::isCommandWithTimestamp(C_DC_TA_1));
+    ASSERT_TRUE(IEC104DataPoint::isCommandWithTimestamp(C_RC_TA_1));
+    ASSERT_TRUE(IEC104DataPoint::isCommandWithTimestamp(C_SE_TA_1));
+    ASSERT_TRUE(IEC104DataPoint::isCommandWithTimestamp(C_SE_TB_1));
+    ASSERT_TRUE(IEC104DataPoint::isCommandWithTimestamp(C_SE_TC_1));
+    ASSERT_FALSE(IEC104DataPoint::isCommandWithTimestamp(C_SC_NA_1));
+
+    int supportedMonitoringTypes[] = {
+        M_SP_NA_1, M_SP_TA_1, M_SP_TB_1, M_DP_NA_1,
+        M_DP_TA_1, M_DP_TB_1, M_ST_NA_1, M_ST_TA_1,
+        M_ST_TB_1, M_ME_NA_1, M_ME_TA_1, M_ME_TD_1,
+        M_ME_NB_1, M_ME_TB_1, M_ME_TE_1, M_ME_NC_1,
+        M_ME_TC_1, M_ME_TF_1
+    };
+    int unsupportedMonitoringTypes = M_BO_NA_1;
+    for (int i = 0; i < sizeof(supportedMonitoringTypes) / sizeof(int); i++) {
+        ASSERT_TRUE(IEC104DataPoint::isSupportedMonitoringType(supportedMonitoringTypes[i]));
+    }
+    ASSERT_FALSE(IEC104DataPoint::isSupportedMonitoringType(unsupportedMonitoringTypes));
+}
+
+struct SendCommandsTestStruct{
+    TypeID typeId;
+    int ca;
+    int ioa;
+    CS101_CauseOfTransmission cot;
+    bool expectedAsduResponse;
+    bool expectedOperationResponse;
+};
+
+TEST_F(ControlTest, SendCommands)
+{
+    SendCommandsTestStruct commands[] = {
+        { C_SC_NA_1, 45, 10005, CS101_COT_ACTIVATION, false, true },
+        { C_DC_NA_1, 45, 14005, CS101_COT_ACTIVATION, false, true },
+        { C_RC_NA_1, 45, 16005, CS101_COT_ACTIVATION, false, true },
+        { C_SE_NA_1, 45, 18005, CS101_COT_ACTIVATION, true, false },
+        { C_SE_NB_1, 45, 20005, CS101_COT_ACTIVATION, true, false },
+        { C_SE_NC_1, 45, 22005, CS101_COT_ACTIVATION, true, false },
+        { C_SC_NA_1, 45, 99999, CS101_COT_ACTIVATION, true, false }, // Unkown IOA
+        { C_SC_NA_1, 99, 10005, CS101_COT_ACTIVATION, true, false }, // Unkown CA
+        { C_SC_NA_1, 45, 10005, CS101_COT_FILE_TRANSFER, true, false },  // Unexpected COT
+        { C_BO_TA_1, 45, 10005, CS101_COT_ACTIVATION, true, false } // Unexpected command type
+    };
+
+    std::string modified_protocol_stack = std::regex_replace(
+        protocol_stack,
+        std::regex("\"cmd_exec_timeout\":1"),
+        "\"cmd_exec_timeout\":10"
+    );
+    iec104Server->setJsonConfig(modified_protocol_stack, exchanged_data, tls);
+    ASSERT_TRUE(iec104Server->startSlave());
+    // Simulate open connecion with south plugin
+    SendSouthEvent("CONSTAT-1", true, "started", false, "");
+
+    iec104Server->registerControl(operateHandleCountCommand);
+
+    Thread_sleep(500); /* wait for the server to start */
+
+    ASSERT_TRUE(CS104_Connection_connect(connection));
+
+    CS104_Connection_sendStartDT(connection);
+    operateHandlerCalled = 0;
+
+    for(SendCommandsTestStruct cmd : commands){
+        InformationObject sc = (InformationObject)SingleCommand_create(NULL, cmd.ioa, true, false, 0);
+        printf("Sending command of type %d, CA : %d, IOA %d\n", cmd.typeId, cmd.ca, cmd.ioa);
+        CS104_Connection_sendProcessCommand(connection, cmd.typeId, cmd.cot, cmd.ca, sc);
+        InformationObject_destroy(sc);
+        Thread_sleep(200);
+
+        ASSERT_EQ(cmd.expectedOperationResponse, operateHandlerCalled);
+        ASSERT_EQ(cmd.expectedAsduResponse, asduHandlerCalled);
+        operateHandlerCalled = 0;
+        asduHandlerCalled = 0;
+    }
 }
