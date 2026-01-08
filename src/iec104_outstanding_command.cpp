@@ -1,0 +1,107 @@
+#include <lib60870/hal_time.h>
+
+#include "iec104.h"
+#include "iec104_datapoint.hpp"
+#include "iec104_utility.hpp"
+
+IEC104OutstandingCommand::IEC104OutstandingCommand(CS101_ASDU asdu, IMasterConnection connection, int cmdExecTimeout, bool isSelect)
+{
+    std::string beforeLog = Iec104Utility::PluginName + " - IEC104OutstandingCommand::IEC104OutstandingCommand -"; //LCOV_EXCL_LINE
+    m_receivedAsdu = CS101_ASDU_clone(asdu, NULL);
+
+    m_connection = connection;
+
+    m_cmdExecTimeout = cmdExecTimeout;
+
+    m_state = 1; /* wait for ACT-CON */
+
+    m_typeId = CS101_ASDU_getTypeID(asdu);
+    m_ca = CS101_ASDU_getCA(asdu);
+
+    m_isSelect = isSelect;
+    
+    InformationObject io = CS101_ASDU_getElement(asdu, 0);
+
+    if (io) {
+        m_ioa = InformationObject_getObjectAddress(io);
+
+        InformationObject_destroy(io);
+    }
+    else {
+        Iec104Utility::log_error("%s ASDU of type %s and CA=%d does not have a IOA field", beforeLog.c_str(), //LCOV_EXCL_LINE
+                                IEC104DataPoint::getStringFromTypeID(m_typeId).c_str(), m_ca); //LCOV_EXCL_LINE
+    }
+
+    m_commandRcvdTime = Hal_getTimeInMs();
+    m_nextTimeout = m_commandRcvdTime + (m_cmdExecTimeout * 1000);
+    Iec104Utility::log_debug("%s Created outstanding command: typeId=%s, CA=%d, IOA=%d, select=%s, timeout=%d", beforeLog.c_str(), //LCOV_EXCL_LINE
+                            IEC104DataPoint::getStringFromTypeID(m_typeId).c_str(), m_ca, m_ioa, m_isSelect?"true":"false", //LCOV_EXCL_LINE
+                            m_cmdExecTimeout);
+}
+
+IEC104OutstandingCommand::~IEC104OutstandingCommand()
+{
+    CS101_ASDU_destroy(m_receivedAsdu);
+}
+
+bool
+IEC104OutstandingCommand::isSentFromConnection(IMasterConnection connection)
+{
+    return (connection == m_connection);
+}
+
+void
+IEC104OutstandingCommand::sendActCon(bool negative)
+{
+    std::string beforeLog = Iec104Utility::PluginName + " - IEC104OutstandingCommand::sendActCon -"; //LCOV_EXCL_LINE
+    if(IMasterConnection_sendACT_CON(m_connection, m_receivedAsdu, negative) == false) {
+        Iec104Utility::log_error("%s Failed to send ACT-CON", beforeLog.c_str()); //LCOV_EXCL_LINE
+    }
+
+    if ((negative == false) && (m_isSelect == false)) {
+        m_state = 2; /* wait for ACT-TERM */
+    }
+    else {
+        m_nextTimeout = 0;
+
+        m_state = 0; /* completed */
+    }
+}
+
+void
+IEC104OutstandingCommand::sendActTerm(bool negative)
+{
+    std::string beforeLog = Iec104Utility::PluginName + " - IEC104OutstandingCommand::sendActTerm -"; //LCOV_EXCL_LINE
+    CS101_ASDU_setNegative(m_receivedAsdu, negative);
+
+    if(IMasterConnection_sendACT_TERM(m_connection, m_receivedAsdu) == false) {
+        Iec104Utility::log_error("%s Failed to send ACT-CON", beforeLog.c_str()); //LCOV_EXCL_LINE
+    }
+
+    m_nextTimeout = 0;
+
+    m_state = 0; /* completed */
+}
+
+bool
+IEC104OutstandingCommand::isMatching(int typeId, int ca, int ioa)
+{
+    if (typeId == m_typeId && ca == m_ca && ioa == m_ioa) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+bool
+IEC104OutstandingCommand::isSelect()
+{
+    return m_isSelect;
+}
+
+bool
+IEC104OutstandingCommand::hasTimedOut(uint64_t currentTime)
+{
+   return (currentTime > m_nextTimeout);
+}

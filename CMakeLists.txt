@@ -12,7 +12,36 @@ project(iec104)
 # If no -D options are given and FLEDGE_ROOT environment variable is set
 # then Fledge libraries and header files are pulled from FLEDGE_ROOT path.
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -O3")
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+if (${CMAKE_BUILD_TYPE} STREQUAL Coverage)
+  message("Coverage is going to be generated")
+  enable_testing()
+  add_subdirectory(tests)
+  include(CodeCoverage)
+  append_coverage_compiler_flags()
+  set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -O0 --coverage")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 --coverage")
+  setup_target_for_coverage_gcovr_sonar(NAME "${PROJECT_NAME}_coverage_sonar"
+                                      EXECUTABLE RunTests
+                                      DEPENDENCIES RunTests
+                                      BASE_DIRECTORY "${PROJECT_SOURCE_DIR}"
+                                      EXCLUDE "tests/*"
+  )    
+
+  setup_target_for_coverage_gcovr_html(NAME "${PROJECT_NAME}_coverage_html"
+                                       EXECUTABLE RunTests
+                                       DEPENDENCIES RunTests
+                                       BASE_DIRECTORY "${PROJECT_SOURCE_DIR}"
+                                       EXCLUDE "tests/*"
+  )
+else()
+  message("Build without Coverage") 
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+endif()
 
 # Generation version header file
 set_source_files_properties(version.h PROPERTIES GENERATED TRUE)
@@ -32,7 +61,7 @@ set(PLUGIN_TYPE "north")
 set(NEEDED_FLEDGE_LIBS common-lib)
 
 # Find source files
-file(GLOB SOURCES *.cpp)
+file(GLOB SOURCES src/*.cpp)
 
 # Set lib60870 home directory
 set(LIB60870 "$ENV{HOME}/lib60870/lib60870-C")

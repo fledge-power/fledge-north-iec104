@@ -58,9 +58,13 @@ if [ ! -d $directory/lib60870 ]; then
 	echo Fetching MZA lib60870 library
 	git clone https://github.com/mz-automation/lib60870.git
 	cd lib60870/lib60870-C
+	cd dependencies
+	wget https://github.com/ARMmbed/mbedtls/archive/refs/tags/v2.16.12.tar.gz
+	tar xf v2.16.12.tar.gz
+	cd ..
 	mkdir build
 	cd build
-	cmake ..
+	cmake -DBUILD_TESTS=NO -DBUILD_EXAMPLES=NO ..
 	make
 	sudo make install
 	cd ..
